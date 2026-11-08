@@ -142,13 +142,14 @@
   {% if por_fecha %}
     <section class="seccion">
       <div class="seccion-cabecera">
-        <h2>Resumen por fecha</h2>
+        <h2>Resumen por fecha y residencia</h2>
       </div>
       <div class="tarjeta tabla-envoltura">
         <table class="tabla">
           <thead>
             <tr>
               <th>Fecha</th>
+              <th>Residencia</th>
               <th class="num">Visitas</th>
               <th class="num">Unidades</th>
               <th class="num">Cupones</th>
@@ -156,8 +157,19 @@
           </thead>
           <tbody>
             {% for resumen in por_fecha %}
+              {% for r in resumen.residencias.values %}
+                <tr>
+                  {% if forloop.first %}
+                    <td rowspan="{{ resumen.residencias|length }}">{{ resumen.fecha_str }}</td>
+                  {% endif %}
+                  <td>{{ r.residencia.nombre }}</td>
+                  <td class="num">{{ r.visitas }}</td>
+                  <td class="num">{{ r.unidades }}</td>
+                  <td class="num">{{ r.cupones }}</td>
+                </tr>
+              {% endfor %}
               <tr>
-                <td>{{ resumen.fecha|date:"d/m/Y" }}</td>
+                <td colspan="2" style="font-weight:700">Subtotal {{ resumen.fecha_str }}</td>
                 <td class="num">{{ resumen.visitas }}</td>
                 <td class="num">{{ resumen.unidades }}</td>
                 <td class="num">{{ resumen.cupones }}</td>
@@ -166,7 +178,7 @@
           </tbody>
           <tfoot>
             <tr>
-              <td>Totales</td>
+              <td colspan="2">Totales</td>
               <td class="num">{{ total_visitas }}</td>
               <td class="num">{{ total_unidades }}</td>
               <td class="num">{{ total_cupones }}</td>

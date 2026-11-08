@@ -880,14 +880,28 @@ def datos_reporte_mensual(request):
             fecha_str,
             {
                 "fecha": visita.fecha,
+                "fecha_str": fecha_str,
                 "visitas": 0,
                 "unidades": 0,
                 "cupones": 0,
+                "residencias": {},
             },
         )
         resumen_fecha["visitas"] += 1
         resumen_fecha["unidades"] += unidades
         resumen_fecha["cupones"] += cupones
+        res_fecha = resumen_fecha["residencias"].setdefault(
+            visita.residencia_id,
+            {
+                "residencia": visita.residencia,
+                "visitas": 0,
+                "unidades": 0,
+                "cupones": 0,
+            },
+        )
+        res_fecha["visitas"] += 1
+        res_fecha["unidades"] += unidades
+        res_fecha["cupones"] += cupones
         for linea in visita.lineas.all():
             producto = por_producto.setdefault(
                 linea.producto_id,
@@ -1092,53 +1106,68 @@ def reporte_mensual_pdf(request):
         elementos.append(tabla)
 
     if datos["por_fecha"]:
-        elementos.append(Paragraph("Resumen por fecha", seccion))
-        filas_fecha = [
-            [
-                Paragraph("Fecha", cabecera_celda),
-                Paragraph("Visitas", cabecera_celda),
-                Paragraph("Unidades", cabecera_celda),
-                Paragraph("Cupones", cabecera_celda),
-            ]
-        ]
+        elementos.append(Paragraph("Resumen por fecha y residencia", seccion))
         for resumen_fecha in datos["por_fecha"]:
+            filas_fecha = [
+                [
+                    Paragraph("Fecha", cabecera_celda),
+                    Paragraph("Residencia", cabecera_celda),
+                    Paragraph("Visitas", cabecera_celda),
+                    Paragraph("Unidades", cabecera_celda),
+                    Paragraph("Cupones", cabecera_celda),
+                ]
+            ]
+            residencias_fecha = list(resumen_fecha["residencias"].values())
+            for i, rf in enumerate(residencias_fecha):
+                if i == 0:
+                    filas_fecha.append(
+                        [
+                            Paragraph(resumen_fecha["fecha_str"], celda),
+                            Paragraph(rf["residencia"].nombre, celda),
+                            Paragraph(str(rf["visitas"]), celda),
+                            Paragraph(str(rf["unidades"]), celda),
+                            Paragraph(str(rf["cupones"]), celda),
+                        ]
+                    )
+                else:
+                    filas_fecha.append(
+                        [
+                            Paragraph("", celda),
+                            Paragraph(rf["residencia"].nombre, celda),
+                            Paragraph(str(rf["visitas"]), celda),
+                            Paragraph(str(rf["unidades"]), celda),
+                            Paragraph(str(rf["cupones"]), celda),
+                        ]
+                    )
             filas_fecha.append(
                 [
-                    Paragraph(resumen_fecha["fecha"].strftime("%d/%m/%Y"), celda),
+                    Paragraph("Subtotal", celda),
+                    Paragraph(resumen_fecha["fecha_str"], celda),
                     Paragraph(str(resumen_fecha["visitas"]), celda),
                     Paragraph(str(resumen_fecha["unidades"]), celda),
                     Paragraph(str(resumen_fecha["cupones"]), celda),
                 ]
             )
-        filas_fecha.append(
-            [
-                Paragraph("Totales", celda),
-                Paragraph(str(sum(f["visitas"] for f in datos["por_fecha"])), celda),
-                Paragraph(
-                    str(sum(f["unidades"] for f in datos["por_fecha"])), celda
-                ),
-                Paragraph(
-                    str(sum(f["cupones"] for f in datos["por_fecha"])), celda
-                ),
-            ]
-        )
-        tabla_fecha = Table(
-            filas_fecha,
-            colWidths=[3.4 * cm, 2.2 * cm, 2.2 * cm, 2.2 * cm],
-            repeatRows=1,
-        )
-        tabla_fecha.setStyle(
-            TableStyle(
-                [
-                    ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#0f766e")),
-                    ("GRID", (0, 0), (-1, -1), 0.4, colors.HexColor("#cbd5e1")),
-                    ("ALIGN", (1, 1), (-1, -1), "RIGHT"),
-                    ("TOPPADDING", (0, 0), (-1, -1), 4),
-                    ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
-                ]
+            tabla_fecha = Table(
+                filas_fecha,
+                colWidths=[2.6 * cm, 4.4 * cm, 1.8 * cm, 1.8 * cm, 1.8 * cm],
+                repeatRows=1,
             )
-        )
-        elementos.append(tabla_fecha)
+            tabla_fecha.setStyle(
+                TableStyle(
+                    [
+                        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#0f766e")),
+                        ("GRID", (0, 0), (-1, -1), 0.4, colors.HexColor("#cbd5e1")),
+                        ("ALIGN", (2, 1), (-1, -1), "RIGHT"),
+                        ("TOPPADDING", (0, 0), (-1, -1), 3),
+                        ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
+                        ("FONTNAME", (0, -1), (-1, -1), "Helvetica-Bold"),
+                        ("BACKGROUND", (0, -1), (-1, -1), colors.HexColor("#eef2f1")),
+                    ]
+                )
+            )
+            elementos.append(tabla_fecha)
+            elementos.append(Spacer(1, 8))
 
     def pie(canvas, doc):
         canvas.saveState()
