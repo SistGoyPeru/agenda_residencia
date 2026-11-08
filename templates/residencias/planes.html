@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}Planes · Ruta Residencias{% endblock %}
+
+{% block content %}
+  <div class="detalle-cabecera">
+    <h1>Planes</h1>
+    <p class="detalle-sub">
+      Estás usando {{ estado.residencias_usadas }}
+      {% if estado.limite_residencias %}de {{ estado.limite_residencias }}{% endif %}
+      residencia{{ estado.residencias_usadas|pluralize:"s" }}.
+    </p>
+  </div>
+
+  <div class="planes mt-14">
+    <section class="plan-card {% if estado.perfil.plan == 'GRATIS' %}destacado{% endif %}">
+      <span class="etiqueta-mini">Gratis</span>
+      <p class="plan-precio">0 €</p>
+      <p class="ayuda">Para empezar sin coste.</p>
+      <ul class="plan-lista">
+        <li>Hasta {{ estado.perfil.LIMITE_GRATIS }} residencias.</li>
+        <li>Agenda semanal y control de cupones.</li>
+        <li>Informe mensual y descarga en PDF.</li>
+        <li>Logo y datos de tu empresa.</li>
+      </ul>
+      {% if estado.perfil.plan == 'GRATIS' %}
+        <span class="chip">Tu plan actual</span>
+      {% endif %}
+    </section>
+
+    <section class="plan-card {% if estado.perfil.plan == 'PRO' %}destacado{% endif %}">
+      <span class="etiqueta-mini">Pro</span>
+      <p class="plan-precio">5 €</p>
+      <p class="ayuda">Por mes. Se abona por Bizum o al contado.</p>
+      <ul class="plan-lista">
+        <li>Residencias ilimitadas.</li>
+        <li>Todo lo del plan gratis.</li>
+        <li>Informes para tu facturación.</li>
+        <li>Soporte prioritario.</li>
+      </ul>
+      {% if estado.perfil.plan == 'PRO' %}
+        <span class="chip">Tu plan actual</span>
+        {% if estado.perfil.activo_hasta %}
+          <p class="ayuda mt-8">Válido hasta el {{ estado.perfil.activo_hasta|date:"d/m/Y" }}.</p>
+        {% endif %}
+      {% else %}
+        <p class="ayuda">
+          Para activar el plan Pro, contacta con el administrador e indícale
+          tu nombre de usuario.
+        </p>
+      {% endif %}
+    </section>
+  </div>
+
+  <div class="fila-botones mt-20">
+    <a class="boton boton-fantasma" href="{% url 'dashboard' %}">Volver</a>
+    <a class="boton boton-fantasma" href="{% url 'mi_cuenta' %}">Mis datos</a>
+  </div>
+{% endblock %}

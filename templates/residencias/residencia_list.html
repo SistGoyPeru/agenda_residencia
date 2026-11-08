@@ -5,12 +5,19 @@
   <div class="detalle-cabecera">
     <div class="seccion-cabecera" style="margin-bottom:10px">
       <h1 style="margin:0;font-size:1.35rem">Residencias</h1>
-      <a class="seccion-enlace" href="{% url 'residencia_nueva' %}">+ Añadir</a>
+      <span class="fila-botones">
+        <a class="seccion-enlace" href="{% url 'zona_list' %}">Zonas</a>
+        {% if estado.puede_agregar %}
+          <a class="seccion-enlace" href="{% url 'residencia_nueva' %}">+ Añadir</a>
+        {% else %}
+          <a class="seccion-enlace" href="{% url 'planes' %}">+ Añadir (plan actual: {{ estado.perfil.get_plan_display }})</a>
+        {% endif %}
+      </span>
     </div>
     <form method="get" action="{% url 'residencia_list' %}">
       <input class="campo" type="search" name="q" value="{{ q }}" placeholder="Buscar por nombre, zona, dirección o teléfono…">
     </form>
-    <p class="ayuda mt-8">{{ activas }} residencia{{ activas|pluralize:"s" }} activa{{ activas|pluralize:"s" }}</p>
+    <p class="ayuda mt-8">{{ activas }} residencia{{ activas|pluralize:"s" }} activa{{ activas|pluralize:"s" }} · Plan {{ estado.perfil.get_plan_display }}{% if estado.limite_residencias %} · {{ estado.residencias_usadas }}/{{ estado.limite_residencias }}{% endif %}</p>
   </div>
 
   <section class="seccion">

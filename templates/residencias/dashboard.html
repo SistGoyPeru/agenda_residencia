@@ -1,7 +1,15 @@
 {% extends "base.html" %}
+{% load static %}
 {% block title %}Inicio · Ruta Residencias{% endblock %}
 
 {% block content %}
+  <div class="marca-dashboard">
+    {% if user.perfil.logo %}
+      <img src="{% url 'mi_logo' %}?v={{ user.perfil.logo_actualizado|date:'U' }}" alt="{{ user.perfil.empresa|default:'Mi empresa' }}">
+    {% else %}
+      <img src="{% static 'img/logo.jpg' %}?v=4" alt="SISTGOY">
+    {% endif %}
+  </div>
   {% if siguiente %}
     {% if siguiente.visita %}
       <section class="hero">
@@ -59,6 +67,45 @@
     </div>
   </div>
 
+  <div class="tarjeta mt-14">
+    <div class="fila-botones" style="align-items:center;justify-content:space-between">
+      <div>
+        <span class="etiqueta-mini">Tu plan</span>
+        <p class="destacado" style="font-size:1.05rem;margin:2px 0 0">
+          {{ estado.perfil.get_plan_display }}{% if estado.limite_residencias %} · {{ estado.residencias_usadas }}/{{ estado.limite_residencias }} residencias{% else %} · residencias ilimitadas{% endif %}{% if estado.perfil.activo_hasta %} · vence el {{ estado.perfil.activo_hasta|date:"d/m/Y" }}{% endif %}
+        </p>
+      </div>
+      <span class="fila-botones">
+        <a class="boton boton-mini boton-fantasma" href="{% url 'reporte_mensual' %}">Informe</a>
+        <a class="boton boton-mini boton-fantasma" href="{% url 'planes' %}">Planes</a>
+      </span>
+    </div>
+    {% if not estado.puede_agregar %}
+      <p class="ayuda mt-8">Has alcanzado el límite del plan gratis. <a href="{% url 'planes' %}">Pasa a Pro</a> para añadir más residencias.</p>
+    {% endif %}
+  </div>
+
+  <div class="tarjeta mt-14">
+    <div class="fila-botones" style="align-items:flex-end;justify-content:space-between">
+      <div>
+        <span class="etiqueta-mini">Hechas esta semana</span>
+        <p class="destacado" style="font-size:1.5rem;margin:2px 0 0">
+          {{ semana.hechas }} <span class="texto-suave" style="font-size:.85rem">de {{ semana.previstas }}</span>
+        </p>
+      </div>
+      <div style="text-align:right">
+        <span class="etiqueta-mini">Por planificar</span>
+        <p class="destacado" style="font-size:1.5rem;margin:2px 0 0">
+          {{ pendientes|length }} <span class="texto-suave" style="font-size:.85rem">residencia{{ pendientes|length|pluralize:"s" }}</span>
+        </p>
+      </div>
+    </div>
+    <div class="barra mt-14">
+      <div class="barra-relleno" style="width: {{ semana.porcentaje }}%"></div>
+    </div>
+    <p class="ayuda mt-8">Sin días fijos: reparte cualquier día hasta completar las visitas de la semana.</p>
+  </div>
+
   <section class="seccion">
     <div class="seccion-cabecera">
       <h2 class="seccion-titulo">Agenda de hoy</h2>
@@ -92,7 +139,7 @@
 
   <section class="seccion">
     <div class="seccion-cabecera">
-      <h2 class="seccion-titulo">Pendientes de la semana</h2>
+      <h2 class="seccion-titulo">Por visitar esta semana</h2>
       <a class="seccion-enlace" href="{% url 'agenda' %}">Agenda ›</a>
     </div>
     {% if pendientes %}
@@ -103,17 +150,21 @@
             <div class="item-cuerpo">
               <p class="item-titulo">{{ fila.residencia.nombre }}</p>
               <p class="item-sub">
-                {{ fila.hechas }} de {{ fila.residencia.frecuencia_semanal }} visitas hechas
-                {% if fila.residencia.zona %} · {{ fila.residencia.zona.nombre }}{% endif %}
+                {% if fila.faltan == 1 %}Le falta 1 visita{% else %}Le faltan {{ fila.faltan }} visitas{% endif %}
+                · cualquier día
+                {% if fila.programadas %} · {{ fila.programadas }} programada{{ fila.programadas|pluralize:"s" }}{% endif %}
               </p>
+              {% if fila.residencia.zona %}
+                <div class="item-meta"><span class="chip">{{ fila.residencia.zona.nombre }}</span></div>
+              {% endif %}
             </div>
-            <a class="boton boton-mini boton-primario" href="{% url 'visita_nueva' %}?residencia={{ fila.residencia.pk }}">Visitar</a>
+            <a class="boton boton-mini boton-primario" href="{% url 'visita_nueva' %}?residencia={{ fila.residencia.pk }}">Programar</a>
           </div>
         {% endfor %}
       </div>
     {% else %}
       <div class="vacio">
-        <strong>Todo cubierto</strong>
+        <strong>Todo planificado</strong>
         Ninguna residencia se queda sin sus visitas esta semana.
       </div>
     {% endif %}

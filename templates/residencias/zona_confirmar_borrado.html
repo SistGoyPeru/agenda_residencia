@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Eliminar zona · Ruta Residencias{% endblock %}
+
+{% block content %}
+  <div class="migas">
+    <a href="{% url 'zona_list' %}">Zonas</a>
+    <span>›</span>
+    <span>Eliminar</span>
+  </div>
+
+  <div class="detalle-cabecera">
+    <h1>¿Eliminar «{{ zona.nombre }}»?</h1>
+    <p class="detalle-sub">Esta acción no se puede deshacer.</p>
+  </div>
+
+  {% if total_residencias %}
+    <div class="aviso-flash error">
+      Esta zona tiene {{ total_residencias }} residencia{{ total_residencias|pluralize }} asignada{{ total_residencias|pluralize:"s" }}.
+      Cámbialas de zona antes de borrarla.
+    </div>
+    <div class="fila-botones mt-20">
+      <a class="boton boton-fantasma" href="{% url 'zona_list' %}">Volver</a>
+      <a class="boton boton-primario" href="{% url 'residencia_list' %}?q={{ zona.nombre|urlencode }}">Ver residencias</a>
+    </div>
+  {% else %}
+    <form method="post" class="mt-20 js-confirm" data-mensaje="¿Seguro que quieres eliminar esta zona?">
+      {% csrf_token %}
+      <div class="fila-botones">
+        <a class="boton boton-fantasma" href="{% url 'zona_list' %}">Cancelar</a>
+        <button class="boton boton-peligro" type="submit">Sí, eliminar</button>
+      </div>
+    </form>
+  {% endif %}
+{% endblock %}

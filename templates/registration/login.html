@@ -1,0 +1,40 @@
+{% load static %}<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0f766e">
+  <title>Entrar · Ruta Residencias</title>
+  <link rel="icon" href="{% static 'favicon.ico' %}?v=4" sizes="any">
+  <link rel="stylesheet" href="{% static 'css/app.css' %}?v=6">
+</head>
+<body class="auth-body">
+  <main class="auth-caja">
+    <img class="auth-logo" src="{% static 'img/logo.jpg' %}?v=4" alt="SISTGOY">
+    <h1>Entrar</h1>
+    <p class="auth-sub">Accede a tu agenda personal de reparto.</p>
+
+    {% if form.non_field_errors %}
+      <div class="aviso-flash error">Usuario o contraseña incorrectos.</div>
+    {% endif %}
+
+    <form method="post">
+      {% csrf_token %}
+      <input type="hidden" name="next" value="{{ next }}">
+      <div class="campo-grupo">
+        <label class="campo-label" for="id_username">Usuario</label>
+        <input class="campo" type="text" name="username" id="id_username" autocomplete="username" autofocus required>
+      </div>
+      <div class="campo-grupo">
+        <label class="campo-label" for="id_password">Contraseña</label>
+        <input class="campo" type="password" name="password" id="id_password" autocomplete="current-password" required>
+      </div>
+      <button class="boton boton-primario boton-bloque" type="submit">Entrar</button>
+    </form>
+
+    <p class="ayuda mt-14" style="text-align:center">
+      ¿No tienes cuenta? <a href="{% url 'registro' %}">Crear cuenta gratis</a>
+    </p>
+  </main>
+</body>
+</html>

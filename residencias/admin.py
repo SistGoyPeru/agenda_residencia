@@ -1,13 +1,41 @@
 from django.contrib import admin
+from django.contrib.auth.admin import UserAdmin as DjangoUserAdmin
+from django.contrib.auth.models import User
 
 from .models import (
     MovimientoCupon,
+    Perfil,
     Producto,
     Residencia,
     Visita,
     VisitaProducto,
     Zona,
 )
+
+
+class PerfilInline(admin.StackedInline):
+    model = Perfil
+    can_delete = False
+    verbose_name_plural = "Perfil"
+    fields = (
+        "plan",
+        "activo_hasta",
+        "empresa",
+        "cif",
+        "telefono",
+        "email_contacto",
+        "direccion",
+        "web",
+    )
+
+
+class UsuarioAdmin(DjangoUserAdmin):
+    inlines = [PerfilInline]
+    list_display = ("username", "email", "is_staff", "is_active")
+
+
+admin.site.unregister(User)
+admin.site.register(User, UsuarioAdmin)
 
 
 @admin.register(Zona)

@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Mi cuenta · Ruta Residencias{% endblock %}
+
+{% block content %}
+  <div class="detalle-cabecera">
+    <h1>Mi cuenta</h1>
+    <p class="detalle-sub">Datos de tu empresa y logo para la agenda y los informes.</p>
+  </div>
+
+  <div class="tarjeta mt-14">
+    <div class="seccion-cabecera">
+      <div>
+        <span class="etiqueta-mini">Plan actual</span>
+        <p class="destacado" style="font-size:1.15rem;margin:2px 0 0">
+          {{ estado.perfil.get_plan_display }}
+          {% if estado.limite_residencias %}
+            · {{ estado.residencias_usadas }}/{{ estado.limite_residencias }} residencias
+          {% else %}
+            · residencias ilimitadas
+          {% endif %}
+        </p>
+      </div>
+      <a class="seccion-enlace" href="{% url 'planes' %}">Ver planes ›</a>
+    </div>
+  </div>
+
+  <form method="post" enctype="multipart/form-data" class="mt-14">
+    {% csrf_token %}
+    {% if form.non_field_errors %}
+      <div class="aviso-flash error">{{ form.non_field_errors|join:", " }}</div>
+    {% endif %}
+
+    <div class="tarjeta">
+      <p class="etiqueta-mini">Logo</p>
+      <div class="logo-preview">
+        {% if perfil.logo %}
+          <img src="{% url 'mi_logo' %}?v={{ perfil.logo_actualizado|date:'U' }}" alt="Logo actual">
+        {% else %}
+          <img src="{% static 'img/logo.jpg' %}?v=4" alt="Logo por defecto">
+        {% endif %}
+        <div style="flex:1">
+          {{ form.logo }}
+          <p class="ayuda">{{ form.logo.help_text }}</p>
+          {% for error in form.logo.errors %}<p class="error">{{ error }}</p>{% endfor %}
+        </div>
+      </div>
+      {% if perfil.logo %}
+        <div class="campo-check">
+          {{ form.quitar_logo }}
+          <label for="{{ form.quitar_logo.id_for_label }}">Quitar el logo actual</label>
+        </div>
+      {% endif %}
+    </div>
+
+    <div class="tarjeta mt-14">
+      <div class="campo-grupo">
+        <label class="campo-label" for="{{ form.empresa.id_for_label }}">Empresa</label>
+        {{ form.empresa }}
+        {% for error in form.empresa.errors %}<p class="error">{{ error }}</p>{% endfor %}
+      </div>
+
+      <div class="grid-dos">
+        <div class="campo-grupo">
+          <label class="campo-label" for="{{ form.cif.id_for_label }}">CIF/NIF</label>
+          {{ form.cif }}
+          {% for error in form.cif.errors %}<p class="error">{{ error }}</p>{% endfor %}
+        </div>
+        <div class="campo-grupo">
+          <label class="campo-label" for="{{ form.telefono.id_for_label }}">Teléfono</label>
+          {{ form.telefono }}
+          {% for error in form.telefono.errors %}<p class="error">{{ error }}</p>{% endfor %}
+        </div>
+      </div>
+
+      <div class="campo-grupo">
+        <label class="campo-label" for="{{ form.email_contacto.id_for_label }}">Email de contacto</label>
+        {{ form.email_contacto }}
+        {% for error in form.email_contacto.errors %}<p class="error">{{ error }}</p>{% endfor %}
+      </div>
+
+      <div class="campo-grupo">
+        <label class="campo-label" for="{{ form.direccion.id_for_label }}">Dirección</label>
+        {{ form.direccion }}
+        {% for error in form.direccion.errors %}<p class="error">{{ error }}</p>{% endfor %}
+      </div>
+
+      <div class="campo-grupo">
+        <label class="campo-label" for="{{ form.web.id_for_label }}">Web</label>
+        {{ form.web }}
+        {% for error in form.web.errors %}<p class="error">{{ error }}</p>{% endfor %}
+      </div>
+    </div>
+
+    <div class="fila-botones mt-20">
+      <a class="boton boton-fantasma" href="{% url 'dashboard' %}">Volver</a>
+      <button class="boton boton-primario" type="submit">Guardar datos</button>
+    </div>
+  </form>
+{% endblock %}

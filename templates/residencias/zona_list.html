@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Zonas · Ruta Residencias{% endblock %}
+
+{% block content %}
+  <div class="detalle-cabecera">
+    <div class="seccion-cabecera" style="margin-bottom:6px">
+      <h1 style="margin:0;font-size:1.35rem">Zonas</h1>
+      <a class="seccion-enlace" href="{% url 'zona_nueva' %}">+ Añadir</a>
+    </div>
+    <p class="detalle-sub">Agrupa las residencias por zona o municipio para ordenar la ruta.</p>
+    <div class="fila-botones mt-14">
+      <a class="boton boton-mini boton-fantasma" href="{% url 'residencia_list' %}">Ver residencias</a>
+    </div>
+  </div>
+
+  <section class="seccion">
+    {% if zonas %}
+      <div class="lista">
+        {% for z in zonas %}
+          <div class="item">
+            <span class="avatar">{{ z.nombre|first }}</span>
+            <div class="item-cuerpo">
+              <p class="item-titulo">{{ z.nombre }}</p>
+              <div class="item-meta">
+                <span class="chip">{{ z.total_residencias }} residencia{{ z.total_residencias|pluralize }}</span>
+                <span class="chip">Orden {{ z.orden }}</span>
+              </div>
+            </div>
+            <div class="fila-botones">
+              <a class="boton boton-mini boton-fantasma" href="{% url 'zona_editar' z.pk %}">Editar</a>
+              <a class="boton boton-mini boton-peligro" href="{% url 'zona_borrar' z.pk %}">Borrar</a>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="vacio">
+        <strong>Sin zonas</strong>
+        Crea una zona para agrupar las residencias de la ruta.
+      </div>
+      <div class="mt-14">
+        <a class="boton boton-primario boton-bloque" href="{% url 'zona_nueva' %}">Añadir zona</a>
+      </div>
+    {% endif %}
+  </section>
+{% endblock %}

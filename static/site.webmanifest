@@ -15,7 +15,7 @@
       "purpose": "any"
     },
     {
-      "src": "/static/img/logo.png",
+      "src": "/static/img/logo-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"

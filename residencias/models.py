@@ -7,22 +7,103 @@ marcadas como entregadas.
 """
 from datetime import timedelta
 
+from django.conf import settings
 from django.db import models
 from django.db.models import Sum
 from django.urls import reverse
 from django.utils import timezone
 
 
+class Perfil(models.Model):
+    """Plan contratado por cada usuario de la agenda."""
+
+    class Plan(models.TextChoices):
+        GRATIS = "GRATIS", "Gratis"
+        PRO = "PRO", "Pro"
+
+    LIMITE_GRATIS = 3
+
+    usuario = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="perfil",
+        verbose_name="Usuario",
+    )
+    plan = models.CharField(
+        max_length=10,
+        choices=Plan.choices,
+        default=Plan.GRATIS,
+        verbose_name="Plan",
+    )
+    activo_hasta = models.DateField(
+        null=True, blank=True, verbose_name="Activo hasta"
+    )
+    empresa = models.CharField(
+        max_length=120, blank=True, verbose_name="Nombre de la empresa"
+    )
+    cif = models.CharField(max_length=20, blank=True, verbose_name="CIF/NIF")
+    telefono = models.CharField(max_length=30, blank=True, verbose_name="Teléfono")
+    email_contacto = models.EmailField(
+        blank=True, verbose_name="Email de contacto"
+    )
+    direccion = models.CharField(
+        max_length=200, blank=True, verbose_name="Dirección"
+    )
+    web = models.URLField(blank=True, verbose_name="Web")
+    logo = models.BinaryField(blank=True, null=True, editable=False)
+    logo_tipo = models.CharField(max_length=40, blank=True, editable=False)
+    logo_actualizado = models.DateTimeField(
+        null=True, blank=True, editable=False
+    )
+    creado_en = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Perfil"
+        verbose_name_plural = "Perfiles"
+
+    def __str__(self):
+        return f"{self.usuario} · {self.get_plan_display()}"
+
+    @property
+    def es_pro(self):
+        if self.plan != self.Plan.PRO:
+            return False
+        if self.activo_hasta and self.activo_hasta < timezone.localdate():
+            return False
+        return True
+
+    @property
+    def limite_residencias(self):
+        return None if self.es_pro else self.LIMITE_GRATIS
+
+
+def perfil_de(usuario):
+    perfil, _ = Perfil.objects.get_or_create(usuario=usuario)
+    return perfil
+
+
 class Zona(models.Model):
     """Zona o barrio para agrupar las residencias de la ruta."""
 
-    nombre = models.CharField(max_length=80, unique=True, verbose_name="Nombre")
+    propietario = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="zonas",
+        verbose_name="Propietario",
+    )
+    nombre = models.CharField(max_length=80, verbose_name="Nombre")
     orden = models.PositiveIntegerField(default=0, verbose_name="Orden")
 
     class Meta:
         ordering = ["orden", "nombre"]
         verbose_name = "Zona"
         verbose_name_plural = "Zonas"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["propietario", "nombre"],
+                name="zona_unica_por_propietario",
+            )
+        ]
 
     def __str__(self):
         return self.nombre
@@ -52,6 +133,12 @@ DIAS_POR_INDICE = [
 class Residencia(models.Model):
     """Una residencia de ancianos a la que se reparte."""
 
+    propietario = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="residencias",
+        verbose_name="Propietario",
+    )
     nombre = models.CharField(max_length=150, verbose_name="Nombre")
     direccion = models.CharField(max_length=200, blank=True, verbose_name="Dirección")
     zona = models.ForeignKey(
@@ -81,7 +168,11 @@ class Residencia(models.Model):
         max_length=3,
         choices=DiasSemana.choices,
         blank=True,
-        verbose_name="Día preferido",
+        verbose_name="Día orientativo",
+        help_text=(
+            "Opcional. No es una cita fija: la ruta puede cambiar de día. "
+            "Solo sirve como referencia."
+        ),
     )
     notas = models.TextField(blank=True, verbose_name="Notas de acceso")
     activo = models.BooleanField(default=True, verbose_name="Activa")
@@ -117,6 +208,12 @@ class Residencia(models.Model):
 class Producto(models.Model):
     """Producto repartido (pañales, empapadores, cremas...)."""
 
+    propietario = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="productos",
+        verbose_name="Propietario",
+    )
     nombre = models.CharField(max_length=120, verbose_name="Nombre")
     descripcion = models.CharField(
         max_length=200, blank=True, verbose_name="Descripción"
@@ -313,16 +410,20 @@ def dia_semana_de(fecha):
     return DIAS_POR_INDICE[fecha.weekday()]
 
 
-def siguiente_residencia(referencia=None):
-    """Residencia recomendada para la próxima visita.
+def siguiente_residencia(usuario, referencia=None):
+    """Residencia recomendada para la próxima visita de este usuario.
 
-    Prioriza las visitas pendientes de hoy; si no hay, devuelve la residencia
-    con menos visitas de las que le tocan esta semana, dando preferencia a la
-    que tiene hoy como día preferido y al orden de ruta.
+    La ruta no tiene días fijos: primero devuelve una visita pendiente de hoy
+    (si existe) y, si no, la residencia a la que todavía le faltan visitas por
+    planificar esta semana, sin importar el día en que se hagan.
     """
     referencia = referencia or timezone.localdate()
     hoy_visita = (
-        Visita.objects.filter(fecha=referencia, estado=Visita.Estado.PENDIENTE)
+        Visita.objects.filter(
+            residencia__propietario=usuario,
+            fecha=referencia,
+            estado=Visita.Estado.PENDIENTE,
+        )
         .select_related("residencia", "residencia__zona")
         .order_by(
             "residencia__zona__orden",
@@ -338,30 +439,42 @@ def siguiente_residencia(referencia=None):
     entregadas = {
         fila["residencia_id"]: fila["total"]
         for fila in Visita.objects.filter(
-            estado=Visita.Estado.ENTREGADA, fecha__range=(inicio, fin)
+            residencia__propietario=usuario,
+            estado=Visita.Estado.ENTREGADA,
+            fecha__range=(inicio, fin),
         )
         .values("residencia_id")
         .annotate(total=models.Count("id"))
     }
-    dia_hoy = dia_semana_de(referencia)
+    programadas = {
+        fila["residencia_id"]: fila["total"]
+        for fila in Visita.objects.filter(
+            residencia__propietario=usuario,
+            estado=Visita.Estado.PENDIENTE,
+            fecha__range=(inicio, fin),
+        )
+        .values("residencia_id")
+        .annotate(total=models.Count("id"))
+    }
     candidatas = []
-    for residencia in Residencia.objects.filter(activo=True).select_related("zona"):
-        faltan = residencia.frecuencia_semanal - entregadas.get(residencia.pk, 0)
+    for residencia in (
+        Residencia.objects.filter(propietario=usuario, activo=True)
+        .select_related("zona")
+    ):
+        cubiertas = entregadas.get(residencia.pk, 0) + programadas.get(residencia.pk, 0)
+        faltan = residencia.frecuencia_semanal - cubiertas
         if faltan > 0:
             candidatas.append((residencia, faltan))
     if not candidatas:
         return None
 
-    def clave(item):
-        residencia, _ = item
-        return (
-            0 if residencia.dia_preferido == dia_hoy else 1,
-            residencia.zona.orden if residencia.zona else 999,
-            residencia.orden_ruta,
-            residencia.nombre,
+    candidatas.sort(
+        key=lambda item: (
+            item[0].zona.orden if item[0].zona else 999,
+            item[0].orden_ruta,
+            item[0].nombre,
         )
-
-    candidatas.sort(key=clave)
+    )
     residencia, faltan = candidatas[0]
     motivo = (
         f"Le faltan {faltan} visita(s) esta semana"

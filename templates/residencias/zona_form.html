@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}{% if zona %}Editar zona{% else %}Nueva zona{% endif %} · Ruta Residencias{% endblock %}
+
+{% block content %}
+  <div class="migas">
+    <a href="{% url 'zona_list' %}">Zonas</a>
+    <span>›</span>
+    <span>{% if zona %}Editar{% else %}Nueva{% endif %}</span>
+  </div>
+
+  <div class="detalle-cabecera">
+    <h1>{% if zona %}{{ zona.nombre }}{% else %}Nueva zona{% endif %}</h1>
+    <p class="detalle-sub">Las residencias se agrupan por zona y se ordenan por el número de orden.</p>
+  </div>
+
+  <form method="post" class="mt-20">
+    {% csrf_token %}
+    {% if form.non_field_errors %}
+      <div class="aviso-flash error">{{ form.non_field_errors|join:", " }}</div>
+    {% endif %}
+
+    <div class="tarjeta">
+      <div class="campo-grupo">
+        <label class="campo-label" for="{{ form.nombre.id_for_label }}">Nombre *</label>
+        {{ form.nombre }}
+        {% for e in form.nombre.errors %}<p class="error">{{ e }}</p>{% endfor %}
+      </div>
+
+      <div class="campo-grupo">
+        <label class="campo-label" for="{{ form.orden.id_for_label }}">Orden</label>
+        {{ form.orden }}
+        <p class="ayuda">Número para ordenar las zonas en la agenda. Menor va primero.</p>
+        {% for e in form.orden.errors %}<p class="error">{{ e }}</p>{% endfor %}
+      </div>
+    </div>
+
+    <div class="fila-botones mt-20">
+      <a class="boton boton-fantasma" href="{% url 'zona_list' %}">Cancelar</a>
+      <button class="boton boton-primario" type="submit">Guardar zona</button>
+    </div>
+  </form>
+{% endblock %}

@@ -1,0 +1,39 @@
+{% load static %}<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0f766e">
+  <title>Crear cuenta · Ruta Residencias</title>
+  <link rel="icon" href="{% static 'favicon.ico' %}?v=4" sizes="any">
+  <link rel="stylesheet" href="{% static 'css/app.css' %}?v=6">
+</head>
+<body class="auth-body">
+  <main class="auth-caja">
+    <img class="auth-logo" src="{% static 'img/logo.jpg' %}?v=4" alt="SISTGOY">
+    <h1>Crear cuenta</h1>
+    <p class="auth-sub">Plan gratis con hasta 3 residencias.</p>
+
+    {% if form.non_field_errors %}
+      <div class="aviso-flash error">{{ form.non_field_errors|join:", " }}</div>
+    {% endif %}
+
+    <form method="post">
+      {% csrf_token %}
+      {% for field in form %}
+        <div class="campo-grupo">
+          <label class="campo-label" for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %} *{% endif %}</label>
+          {{ field }}
+          {% for error in field.errors %}<p class="error">{{ error }}</p>{% endfor %}
+          {% if field.help_text %}<p class="ayuda">{{ field.help_text|safe }}</p>{% endif %}
+        </div>
+      {% endfor %}
+      <button class="boton boton-primario boton-bloque" type="submit">Crear cuenta</button>
+    </form>
+
+    <p class="ayuda mt-14" style="text-align:center">
+      ¿Ya tienes cuenta? <a href="{% url 'login' %}">Entrar</a>
+    </p>
+  </main>
+</body>
+</html>

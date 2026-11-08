@@ -35,7 +35,7 @@
       <div class="campo-grupo">
         <label class="campo-label" for="{{ form.zona.id_for_label }}">Zona</label>
         {{ form.zona }}
-        <p class="ayuda">Sin zona también vale. Se ordena la ruta por zona y luego por orden.</p>
+        <p class="ayuda">Sin zona también vale. Se ordena la ruta por zona y luego por orden. ¿Falta una? <a href="{% url 'zona_nueva' %}" target="_blank" rel="noopener">Crear zona</a>.</p>
         {% for e in form.zona.errors %}<p class="error">{{ e }}</p>{% endfor %}
       </div>
 
@@ -72,8 +72,9 @@
       </div>
 
       <div class="campo-grupo">
-        <label class="campo-label" for="{{ form.dia_preferido.id_for_label }}">Día preferido</label>
+        <label class="campo-label" for="{{ form.dia_preferido.id_for_label }}">Día orientativo (opcional)</label>
         {{ form.dia_preferido }}
+        <p class="ayuda">No es una cita fija: la ruta puede cambiar de día. Solo sirve de referencia.</p>
         {% for e in form.dia_preferido.errors %}<p class="error">{{ e }}</p>{% endfor %}
       </div>
 

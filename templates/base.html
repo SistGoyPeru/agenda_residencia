@@ -5,27 +5,45 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#0f766e">
   <title>{% block title %}Ruta Residencias{% endblock %}</title>
-  <link rel="stylesheet" href="{% static 'css/app.css' %}">
-  <link rel="icon" href="{% static 'favicon.ico' %}" sizes="any">
-  <link rel="icon" type="image/png" sizes="32x32" href="{% static 'img/favicon-32.png' %}">
-  <link rel="icon" type="image/png" sizes="16x16" href="{% static 'img/favicon-16.png' %}">
-  <link rel="apple-touch-icon" href="{% static 'img/apple-touch-icon.png' %}">
-  <link rel="manifest" href="{% static 'site.webmanifest' %}">
+  <link rel="stylesheet" href="{% static 'css/app.css' %}?v=6">
+  <link rel="icon" href="{% static 'favicon.ico' %}?v=4" sizes="any">
+  <link rel="icon" type="image/png" sizes="32x32" href="{% static 'img/favicon-32.png' %}?v=4">
+  <link rel="icon" type="image/png" sizes="16x16" href="{% static 'img/favicon-16.png' %}?v=4">
+  <link rel="apple-touch-icon" href="{% static 'img/apple-touch-icon.png' %}?v=4">
+  <link rel="manifest" href="{% static 'site.webmanifest' %}?v=4">
 </head>
 <body>
   <div class="app">
     <header class="topbar">
       <div class="marca">
         <span class="logo">
-          <img src="{% static 'img/logo.png' %}" alt="">
+          {% if user.perfil.logo %}
+            <img src="{% url 'mi_logo' %}?v={{ user.perfil.logo_actualizado|date:'U' }}" alt="">
+          {% else %}
+            <img src="{% static 'img/logo.jpg' %}?v=4" alt="" width="512" height="409" fetchpriority="high">
+          {% endif %}
         </span>
         <div class="marca-texto">
-          <strong>Ruta Residencias</strong>
+          <strong>{% if user.perfil.empresa %}{{ user.perfil.empresa }}{% else %}Ruta Residencias{% endif %}</strong>
           <small>Agenda de reparto</small>
         </div>
       </div>
-      <div class="topbar-fecha">
-        {% now "l" %}<br>{% now "d M Y" %}
+      <div class="topbar-derecha">
+        <div class="topbar-fecha">
+          {% now "l" %}<br>{% now "d M Y" %}
+        </div>
+        <div class="topbar-usuario">
+          <a class="chip" href="{% url 'mi_cuenta' %}">{{ request.user.username }}</a>
+          {% if request.user.is_staff %}
+            <a class="chip" href="{% url 'admin:index' %}">Admin</a>
+            <a class="chip" href="{% url 'usuarios' %}">Usuarios</a>
+            <a class="chip" href="{% url 'password_change' %}">Clave</a>
+          {% endif %}
+          <form method="post" action="{% url 'logout' %}">
+            {% csrf_token %}
+            <button class="boton boton-mini boton-fantasma" type="submit">Salir</button>
+          </form>
+        </div>
       </div>
     </header>
 

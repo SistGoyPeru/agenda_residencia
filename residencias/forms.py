@@ -1,16 +1,96 @@
 from django import forms
+from django.contrib.auth import get_user_model
+from django.contrib.auth.forms import UserCreationForm
 from django.forms import inlineformset_factory
 
 from .models import (
     MovimientoCupon,
+    Perfil,
     Producto,
     Residencia,
     Visita,
     VisitaProducto,
+    Zona,
 )
 
 TEXTO = {"class": "campo"}
 AREA = {"class": "campo", "rows": 2}
+
+
+class RegistroForm(UserCreationForm):
+    email = forms.EmailField(
+        required=True, widget=forms.EmailInput(attrs={**TEXTO, "placeholder": "tu@email.com"})
+    )
+
+    class Meta(UserCreationForm.Meta):
+        model = get_user_model()
+        fields = ("username", "email")
+        widgets = {
+            "username": forms.TextInput(
+                attrs={**TEXTO, "placeholder": "Tu nombre de usuario"}
+            ),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["password1"].widget.attrs["class"] = "campo"
+        self.fields["password2"].widget.attrs["class"] = "campo"
+
+
+class PerfilForm(forms.ModelForm):
+    logo = forms.FileField(
+        required=False,
+        label="Logo",
+        help_text="PNG, JPG o WEBP. Máximo 300 KB.",
+    )
+    quitar_logo = forms.BooleanField(
+        required=False, label="Quitar el logo actual"
+    )
+
+    class Meta:
+        model = Perfil
+        fields = [
+            "empresa",
+            "cif",
+            "telefono",
+            "email_contacto",
+            "direccion",
+            "web",
+        ]
+        widgets = {
+            "empresa": forms.TextInput(
+                attrs={**TEXTO, "placeholder": "Transportes García S.L."}
+            ),
+            "cif": forms.TextInput(attrs={**TEXTO, "placeholder": "B12345678"}),
+            "telefono": forms.TextInput(
+                attrs={**TEXTO, "placeholder": "600 000 000", "inputmode": "tel"}
+            ),
+            "email_contacto": forms.EmailInput(
+                attrs={**TEXTO, "placeholder": "contacto@empresa.com"}
+            ),
+            "direccion": forms.TextInput(
+                attrs={**TEXTO, "placeholder": "Calle, número, ciudad"}
+            ),
+            "web": forms.URLInput(
+                attrs={**TEXTO, "placeholder": "https://tuempresa.com"}
+            ),
+        }
+
+
+class ZonaForm(forms.ModelForm):
+    class Meta:
+        model = Zona
+        fields = ["nombre", "orden"]
+        widgets = {
+            "nombre": forms.TextInput(
+                attrs={**TEXTO, "placeholder": "Cornellà de Llobregat"}
+            ),
+            "orden": forms.NumberInput(attrs={**TEXTO, "min": 0}),
+        }
+
+    def __init__(self, *args, user=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.user = user
 
 
 class ResidenciaForm(forms.ModelForm):
@@ -43,6 +123,12 @@ class ResidenciaForm(forms.ModelForm):
             "activo": forms.CheckboxInput(attrs={"class": "interruptor"}),
         }
 
+    def __init__(self, *args, user=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.user = user
+        self.fields["zona"].queryset = Zona.objects.filter(propietario=user)
+        self.fields["zona"].empty_label = "Sin zona"
+
 
 class ProductoForm(forms.ModelForm):
     class Meta:
@@ -62,6 +148,10 @@ class ProductoForm(forms.ModelForm):
             "activo": forms.CheckboxInput(attrs={"class": "interruptor"}),
         }
 
+    def __init__(self, *args, user=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.user = user
+
 
 class MovimientoCuponForm(forms.ModelForm):
     class Meta:
@@ -74,6 +164,12 @@ class MovimientoCuponForm(forms.ModelForm):
             "tipo": forms.Select(attrs=TEXTO),
             "notas": forms.TextInput(attrs={**TEXTO, "placeholder": "Ej. compra semanal"}),
         }
+
+    def __init__(self, *args, user=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["producto"].queryset = Producto.objects.filter(
+            propietario=user
+        )
 
     def clean_cantidad(self):
         cantidad = self.cleaned_data.get("cantidad") or 0
@@ -94,10 +190,10 @@ class VisitaForm(forms.ModelForm):
             "notas": forms.Textarea(attrs={**AREA, "placeholder": "Observaciones de la visita"}),
         }
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, user=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["residencia"].queryset = Residencia.objects.filter(
-            activo=True
+            propietario=user, activo=True
         ).select_related("zona")
         if not self.instance.pk:
             self.fields["residencia"].empty_label = "Elige residencia..."
@@ -122,9 +218,11 @@ class VisitaProductoForm(forms.ModelForm):
             ),
         }
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, user=None, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["producto"].queryset = Producto.objects.filter(activo=True)
+        self.fields["producto"].queryset = Producto.objects.filter(
+            propietario=user, activo=True
+        )
         self.fields["producto"].empty_label = "Producto..."
         self.fields["cupones"].required = False
         self.fields["cupones"].help_text = "Vacío = unidades x cupones por unidad"

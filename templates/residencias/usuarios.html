@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Usuarios · Ruta Residencias{% endblock %}
+
+{% block content %}
+  <div class="detalle-cabecera">
+    <h1>Usuarios</h1>
+    <p class="detalle-sub">Clientes con cuenta y su plan actual.</p>
+  </div>
+
+  <div class="tarjeta mt-14 tabla-envoltura">
+    <table class="tabla">
+      <thead>
+        <tr>
+          <th>Usuario</th>
+          <th>Email</th>
+          <th>Plan</th>
+          <th>Activo hasta</th>
+          <th class="num">Residencias</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for usuario in usuarios %}
+          <tr>
+            <td>{{ usuario.username }}</td>
+            <td>{{ usuario.email|default:"—" }}</td>
+            <td>{{ usuario.perfil.get_plan_display }}</td>
+            <td>{% if usuario.perfil.activo_hasta %}{{ usuario.perfil.activo_hasta|date:"d/m/Y" }}{% else %}—{% endif %}</td>
+            <td class="num">{{ usuario.perfil.residencias.count }}</td>
+            <td class="num"><a class="seccion-enlace" href="{% url 'admin:auth_user_change' usuario.pk %}">Administrar ›</a>
+              <form method="post" action="{% url 'usuario_activar_plan' usuario.pk %}" style="display:inline" onsubmit="return confirm('Activar plan Pro de 30 dias?');">
+                {% csrf_token %}
+                <button class="boton boton-mini boton-primario" type="submit">Activar Pro</button>
+              </form></td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="fila-botones mt-20">
+    <a class="boton boton-fantasma" href="{% url 'dashboard' %}">Volver</a>
+  </div>
+{% endblock %}

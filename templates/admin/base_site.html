@@ -1,0 +1,10 @@
+{% extends "admin/base.html" %}
+{% load static %}
+{% block branding %}
+  <div class="branding">
+    <a href="{% url 'admin:index' %}">
+      <img src="{% static 'img/logo.jpg' %}?v=4" alt="SISTGOY" class="admin-logo">
+      <span class="admin-nombre">Ruta Residencias</span>
+    </a>
+  </div>
+{% endblock %}

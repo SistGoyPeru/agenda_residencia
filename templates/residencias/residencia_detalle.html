@@ -16,7 +16,7 @@
     <div class="item-meta">
       {% if residencia.zona %}<span class="chip">{{ residencia.zona.nombre }}</span>{% endif %}
       <span class="chip">{{ residencia.frecuencia_semanal }} visita{{ residencia.frecuencia_semanal|pluralize:"s" }} / semana</span>
-      {% if residencia.dia_preferido %}<span class="chip">{{ residencia.get_dia_preferido_display }}</span>{% endif %}
+      {% if residencia.dia_preferido %}<span class="chip">Orientativo: {{ residencia.get_dia_preferido_display }}</span>{% endif %}
       {% if not residencia.activo %}<span class="chip chip-alerta">Inactiva</span>{% endif %}
     </div>
 

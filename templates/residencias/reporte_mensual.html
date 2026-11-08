@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+{% block title %}Informe mensual · Ruta Residencias{% endblock %}
+
+{% block content %}
+  <div class="seccion-cabecera no-imprimir">
+    <div>
+      <h1 style="margin:0">Informe mensual</h1>
+      <p class="detalle-sub" style="margin:4px 0 0">
+        {{ perfil.empresa|default:request.user.username }} ·
+        {{ inicio|date:"F Y" }}
+      </p>
+    </div>
+    <span class="fila-botones">
+      <a class="boton boton-mini boton-fantasma" href="{% url 'reporte_mensual_pdf' %}?mes={{ mes }}{% if residencia_id %}&amp;residencia={{ residencia_id }}{% endif %}">Descargar PDF</a>
+      <button class="boton boton-mini boton-fantasma" type="button" onclick="window.print()">Imprimir</button>
+    </span>
+  </div>
+
+  <form method="get" class="tarjeta mt-14 no-imprimir">
+    <div class="grid-dos">
+      <div class="campo-grupo">
+        <label class="campo-label" for="id_mes">Mes</label>
+        <input class="campo" type="month" name="mes" id="id_mes" value="{{ mes }}">
+      </div>
+      <div class="campo-grupo">
+        <label class="campo-label" for="id_residencia">Residencia</label>
+        <select class="campo" name="residencia" id="id_residencia">
+          <option value="">Todas</option>
+          {% for residencia in residencias %}
+            <option value="{{ residencia.pk }}" {% if residencia.pk|stringformat:"s" == residencia_id %}selected{% endif %}>{{ residencia.nombre }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+    <div class="fila-botones">
+      <a class="boton boton-mini boton-fantasma" href="?mes={{ mes_anterior }}{% if residencia_id %}&amp;residencia={{ residencia_id }}{% endif %}">‹ Mes anterior</a>
+      <button class="boton boton-mini boton-primario" type="submit">Ver informe</button>
+      <a class="boton boton-mini boton-fantasma" href="?mes={{ mes_siguiente }}{% if residencia_id %}&amp;residencia={{ residencia_id }}{% endif %}">Mes siguiente ›</a>
+    </div>
+  </form>
+
+  <div class="stats mt-14">
+    <div class="stat">
+      <span class="num">{{ total_visitas }}</span>
+      <span class="eti">Entregas</span>
+    </div>
+    <div class="stat verde">
+      <span class="num">{{ total_unidades }}</span>
+      <span class="eti">Unidades</span>
+    </div>
+    <div class="stat ambar">
+      <span class="num">{{ total_cupones }}</span>
+      <span class="eti">Cupones</span>
+    </div>
+    <div class="stat">
+      <span class="num">{{ por_residencia|length }}</span>
+      <span class="eti">Residencias</span>
+    </div>
+  </div>
+
+  <section class="seccion">
+    <div class="seccion-cabecera">
+      <h2>Detalle de entregas</h2>
+      <span class="chip">{{ inicio|date:"d/m/Y" }} – {{ fin|date:"d/m/Y" }}</span>
+    </div>
+
+    {% if filas %}
+      <div class="tarjeta tabla-envoltura">
+        <table class="tabla">
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Residencia</th>
+              <th>Turno</th>
+              <th>Productos</th>
+              <th class="num">Unid.</th>
+              <th class="num">Cup.</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for fila in filas %}
+              <tr>
+                <td>{{ fila.visita.fecha|date:"d/m/Y" }}</td>
+                <td>{{ fila.visita.residencia.nombre }}</td>
+                <td>{{ fila.visita.get_turno_display }}</td>
+                <td>
+                  {% for linea in fila.visita.lineas.all %}
+                    {{ linea.cantidad }}× {{ linea.producto.nombre }}{% if not forloop.last %}, {% endif %}
+                  {% empty %}—{% endfor %}
+                </td>
+                <td class="num">{{ fila.unidades }}</td>
+                <td class="num">{{ fila.cupones }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+          <tfoot>
+            <tr>
+              <td colspan="4">Totales</td>
+              <td class="num">{{ total_unidades }}</td>
+              <td class="num">{{ total_cupones }}</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    {% else %}
+      <div class="tarjeta">
+        <p class="ayuda">No hay entregas registradas en este periodo.</p>
+      </div>
+    {% endif %}
+  </section>
+
+  {% if por_residencia %}
+    <section class="seccion">
+      <div class="seccion-cabecera">
+        <h2>Resumen por residencia</h2>
+      </div>
+      <div class="tarjeta tabla-envoltura">
+        <table class="tabla">
+          <thead>
+            <tr>
+              <th>Residencia</th>
+              <th class="num">Visitas</th>
+              <th class="num">Unidades</th>
+              <th class="num">Cupones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for resumen in por_residencia %}
+              <tr>
+                <td>{{ resumen.residencia.nombre }}</td>
+                <td class="num">{{ resumen.visitas }}</td>
+                <td class="num">{{ resumen.unidades }}</td>
+                <td class="num">{{ resumen.cupones }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  {% endif %}
+
+  {% if por_producto %}
+    <section class="seccion">
+      <div class="seccion-cabecera">
+        <h2>Resumen por producto</h2>
+      </div>
+      <div class="tarjeta tabla-envoltura">
+        <table class="tabla">
+          <thead>
+            <tr>
+              <th>Producto</th>
+              <th class="num">Unidades</th>
+              <th class="num">Cupones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for resumen in por_producto %}
+              <tr>
+                <td>{{ resumen.producto.nombre }}</td>
+                <td class="num">{{ resumen.cantidad }}</td>
+                <td class="num">{{ resumen.cupones }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  {% endif %}
+
+  <p class="ayuda mt-20">
+    {% if perfil.empresa %}{{ perfil.empresa }} · {% endif %}
+    Informe generado con Ruta Residencias.
+  </p>
+{% endblock %}
