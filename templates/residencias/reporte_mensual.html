@@ -139,6 +139,44 @@
     </section>
   {% endif %}
 
+  {% if por_fecha %}
+    <section class="seccion">
+      <div class="seccion-cabecera">
+        <h2>Resumen por fecha</h2>
+      </div>
+      <div class="tarjeta tabla-envoltura">
+        <table class="tabla">
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th class="num">Visitas</th>
+              <th class="num">Unidades</th>
+              <th class="num">Cupones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for resumen in por_fecha %}
+              <tr>
+                <td>{{ resumen.fecha|date:"d/m/Y" }}</td>
+                <td class="num">{{ resumen.visitas }}</td>
+                <td class="num">{{ resumen.unidades }}</td>
+                <td class="num">{{ resumen.cupones }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+          <tfoot>
+            <tr>
+              <td>Totales</td>
+              <td class="num">{{ total_visitas }}</td>
+              <td class="num">{{ total_unidades }}</td>
+              <td class="num">{{ total_cupones }}</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </section>
+  {% endif %}
+
   <p class="ayuda mt-20">
     {% if perfil.empresa %}{{ perfil.empresa }} · {% endif %}
     Informe generado con Ruta Residencias.
