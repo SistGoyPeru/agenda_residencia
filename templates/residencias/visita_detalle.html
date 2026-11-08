@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block title %}Visita a {{ visita.residencia.nombre }} · Ruta Residencias{% endblock %}
+
+{% block content %}
+  <div class="migas">
+    <a href="{% url 'agenda' %}">Agenda</a>
+    <span>›</span>
+    <span>{{ visita.fecha|date:"d/m/Y" }}</span>
+  </div>
+
+  <div class="detalle-cabecera">
+    <div class="seccion-cabecera" style="margin-bottom:6px">
+      <h1 style="margin:0">{{ visita.residencia.nombre }}</h1>
+      <span class="pill {% if visita.estado == 'E' %}pill-e{% elif visita.estado == 'I' %}pill-i{% else %}pill-p{% endif %}">{{ visita.get_estado_display }}</span>
+    </div>
+    <p class="detalle-sub" style="text-transform:capitalize">{{ visita.fecha|date:"l d/m/Y" }} · {{ visita.get_turno_display }}</p>
+    <div class="item-meta">
+      {% if visita.residencia.zona %}<span class="chip">{{ visita.residencia.zona.nombre }}</span>{% endif %}
+      {% if visita.residencia.telefono %}<span class="chip">{{ visita.residencia.telefono }}</span>{% endif %}
+      <a class="chip" href="{% url 'residencia_detalle' visita.residencia.pk %}">Ver ficha ›</a>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="stat verde">
+      <span class="num">{{ visita.total_unidades }}</span>
+      <span class="eti">Unidades</span>
+    </div>
+    <div class="stat ambar">
+      <span class="num">{{ visita.total_cupones }}</span>
+      <span class="eti">Cupones</span>
+    </div>
+    <div class="stat">
+      <span class="num">{{ visita.lineas.count }}</span>
+      <span class="eti">Productos</span>
+    </div>
+  </div>
+
+  <section class="seccion">
+    <div class="seccion-cabecera">
+      <h2 class="seccion-titulo">Productos entregados</h2>
+      <a class="seccion-enlace" href="{% url 'visita_editar' visita.pk %}">Editar</a>
+    </div>
+    {% if visita.lineas.all %}
+      <div class="lista">
+        {% for linea in visita.lineas.all %}
+          <div class="item">
+            <span class="avatar">{{ linea.producto.nombre|first }}</span>
+            <div class="item-cuerpo">
+              <p class="item-titulo">{{ linea.producto.nombre }}</p>
+              <p class="item-sub">{{ linea.cantidad }} unidad{{ linea.cantidad|pluralize:"es" }} · {{ linea.cupones }} cupón{{ linea.cupones|pluralize:"es" }}</p>
+            </div>
+            <span class="destacado">{{ linea.cantidad }}</span>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="vacio">
+        <strong>Sin productos</strong>
+        Esta visita todavía no tiene productos cargados.
+      </div>
+      <div class="mt-14">
+        <a class="boton boton-primario boton-bloque" href="{% url 'visita_editar' visita.pk %}">Añadir productos</a>
+      </div>
+    {% endif %}
+  </section>
+
+  {% if visita.notas %}
+    <div class="tarjeta">
+      <span class="etiqueta-mini">Notas</span>
+      <p style="margin:6px 0 0">{{ visita.notas|linebreaksbr }}</p>
+    </div>
+  {% endif %}
+
+  <section class="seccion">
+    <div class="seccion-cabecera">
+      <h2 class="seccion-titulo">Marcar la visita</h2>
+    </div>
+    <div class="fila-botones">
+      <form method="post" action="{% url 'visita_estado' visita.pk 'E' %}" style="flex:1">
+        {% csrf_token %}
+        <button class="boton boton-primario boton-bloque" type="submit">Entregada</button>
+      </form>
+      <form method="post" action="{% url 'visita_estado' visita.pk 'I' %}" style="flex:1">
+        {% csrf_token %}
+        <button class="boton boton-coral boton-bloque" type="submit">Incidencia</button>
+      </form>
+    </div>
+    <div class="fila-botones mt-14">
+      <a class="boton boton-fantasma" href="{% url 'visita_editar' visita.pk %}">Editar visita</a>
+      <a class="boton boton-peligro" href="{% url 'visita_borrar' visita.pk %}">Eliminar</a>
+    </div>
+  </section>
+{% endblock %}

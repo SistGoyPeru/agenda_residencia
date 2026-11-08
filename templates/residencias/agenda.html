@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}Agenda · Ruta Residencias{% endblock %}
+
+{% block content %}
+  <div class="detalle-cabecera">
+    <div class="seccion-cabecera" style="margin-bottom:6px">
+      <h1 style="margin:0;font-size:1.35rem">Agenda semanal</h1>
+      <a class="seccion-enlace" href="{% url 'visita_nueva' %}">+ Visita</a>
+    </div>
+    <p class="detalle-sub" style="text-transform:capitalize">{{ inicio|date:"d M" }} – {{ fin|date:"d M Y" }}</p>
+    <div class="fila-botones mt-14">
+      <a class="boton boton-mini boton-fantasma" href="?semana={{ semana_anterior }}">‹ Anterior</a>
+      <a class="boton boton-mini boton-fantasma {% if es_semana_actual %}boton-primario{% endif %}" href="?semana=0">Esta semana</a>
+      <a class="boton boton-mini boton-fantasma" href="?semana={{ semana_siguiente }}">Siguiente ›</a>
+    </div>
+  </div>
+
+  <section class="seccion">
+    {% for d in dias %}
+      <div class="dia {% if d.es_hoy %}es-hoy{% endif %}">
+        <div class="dia-cabecera">
+          <span class="dia-num">{{ d.fecha|date:"d" }}</span>
+          <span class="dia-fecha">{{ d.fecha|date:"l" }}</span>
+          {% if d.es_hoy %}<span class="pill pill-e">Hoy</span>{% endif %}
+        </div>
+        {% if d.visitas %}
+          <div class="lista">
+            {% for v in d.visitas %}
+              <a class="item" href="{% url 'visita_detalle' v.pk %}">
+                <span class="avatar">{{ v.residencia.nombre|first }}</span>
+                <div class="item-cuerpo">
+                  <p class="item-titulo">{{ v.residencia.nombre }}</p>
+                  <p class="item-sub">
+                    {{ v.get_turno_display }}{% if v.residencia.zona %} · {{ v.residencia.zona.nombre }}{% endif %}
+                  </p>
+                </div>
+                <span class="pill {% if v.estado == 'E' %}pill-e{% elif v.estado == 'I' %}pill-i{% else %}pill-p{% endif %}">{{ v.get_estado_display }}</span>
+              </a>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="ayuda sangrado" style="margin-bottom:10px">Sin visitas programadas.</p>
+        {% endif %}
+      </div>
+    {% endfor %}
+  </section>
+
+  <section class="seccion">
+    <div class="seccion-cabecera">
+      <h2 class="seccion-titulo">Faltan esta semana</h2>
+    </div>
+    {% if pendientes %}
+      <div class="lista">
+        {% for fila in pendientes %}
+          <div class="item">
+            <span class="avatar">{{ fila.residencia.nombre|first }}</span>
+            <div class="item-cuerpo">
+              <p class="item-titulo">{{ fila.residencia.nombre }}</p>
+              <p class="item-sub">
+                {{ fila.hechas }} de {{ fila.residencia.frecuencia_semanal }} visitas
+                {% if fila.residencia.dia_preferido %} · día preferido {{ fila.residencia.get_dia_preferido_display }}{% endif %}
+              </p>
+            </div>
+            <a class="boton boton-mini boton-primario" href="{% url 'visita_nueva' %}?residencia={{ fila.residencia.pk }}">Visitar</a>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="vacio">
+        <strong>Todo cubierto</strong>
+        No queda ninguna residencia pendiente esta semana.
+      </div>
+    {% endif %}
+  </section>
+{% endblock %}

@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% block title %}Cupones · Ruta Residencias{% endblock %}
+
+{% block content %}
+  <div class="detalle-cabecera">
+    <div class="seccion-cabecera" style="margin-bottom:6px">
+      <h1 style="margin:0;font-size:1.35rem">Cupones</h1>
+      <a class="seccion-enlace" href="{% url 'producto_list' %}">Productos ›</a>
+    </div>
+    <p class="detalle-sub">Stock de cupones por producto y cargas realizadas.</p>
+  </div>
+
+  <div class="stats">
+    <div class="stat verde">
+      <span class="num">{{ total_cupones }}</span>
+      <span class="eti">En stock</span>
+    </div>
+    <div class="stat">
+      <span class="num">{{ usados_semana }}</span>
+      <span class="eti">Usados semana</span>
+    </div>
+    <div class="stat coral">
+      <span class="num">{{ bajos|length }}</span>
+      <span class="eti">Stock bajo</span>
+    </div>
+  </div>
+
+  <section class="seccion">
+    <div class="seccion-cabecera">
+      <h2 class="seccion-titulo">Cargar cupones</h2>
+    </div>
+    <form method="post" action="{% url 'cupon_cargar' %}" class="tarjeta">
+      {% csrf_token %}
+      <div class="campo-grupo">
+        <label class="campo-label" for="{{ form.producto.id_for_label }}">Producto</label>
+        {{ form.producto }}
+        {% for e in form.producto.errors %}<p class="error">{{ e }}</p>{% endfor %}
+      </div>
+      <div class="grid-dos">
+        <div class="campo-grupo">
+          <label class="campo-label" for="{{ form.cantidad.id_for_label }}">Cantidad</label>
+          {{ form.cantidad }}
+          {% for e in form.cantidad.errors %}<p class="error">{{ e }}</p>{% endfor %}
+        </div>
+        <div class="campo-grupo">
+          <label class="campo-label" for="{{ form.fecha.id_for_label }}">Fecha</label>
+          {{ form.fecha }}
+          {% for e in form.fecha.errors %}<p class="error">{{ e }}</p>{% endfor %}
+        </div>
+      </div>
+      <div class="campo-grupo">
+        <label class="campo-label" for="{{ form.tipo.id_for_label }}">Tipo</label>
+        {{ form.tipo }}
+        {% for e in form.tipo.errors %}<p class="error">{{ e }}</p>{% endfor %}
+      </div>
+      <div class="campo-grupo">
+        <label class="campo-label" for="{{ form.notas.id_for_label }}">Notas</label>
+        {{ form.notas }}
+        {% for e in form.notas.errors %}<p class="error">{{ e }}</p>{% endfor %}
+      </div>
+      <button class="boton boton-primario boton-bloque" type="submit">Guardar carga</button>
+    </form>
+  </section>
+
+  <section class="seccion">
+    <div class="seccion-cabecera">
+      <h2 class="seccion-titulo">Stock por producto</h2>
+    </div>
+    {% if productos %}
+      <div class="lista">
+        {% for p in productos %}
+          <div class="item">
+            <span class="avatar">{{ p.nombre|first }}</span>
+            <div class="item-cuerpo">
+              <p class="item-titulo">
+                {{ p.nombre }}
+                {% if p.bajo %}<span class="pill pill-i">Stock bajo</span>{% endif %}
+              </p>
+              <div class="barra">
+                <div class="barra-relleno {% if p.bajo %}bajo{% endif %}" style="width: {{ p.porcentaje }}%"></div>
+              </div>
+              <p class="ayuda">
+                Quedan <strong>{{ p.stock }}</strong> · {{ p.usados }} usados de {{ p.cargados }} cargados
+              </p>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="vacio">
+        <strong>Sin productos</strong>
+        Crea productos primero para poder cargar cupones.
+      </div>
+      <div class="mt-14">
+        <a class="boton boton-primario boton-bloque" href="{% url 'producto_nuevo' %}">Añadir producto</a>
+      </div>
+    {% endif %}
+  </section>
+
+  <section class="seccion">
+    <div class="seccion-cabecera">
+      <h2 class="seccion-titulo">Últimos movimientos</h2>
+    </div>
+    {% if movimientos %}
+      <div class="tarjeta">
+        <table class="tabla">
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Producto</th>
+              <th class="der">Cupones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for m in movimientos %}
+              <tr>
+                <td>{{ m.fecha|date:"d/m/y" }}</td>
+                <td>{{ m.producto.nombre }}{% if m.notas %}<br><span class="texto-suave" style="font-size:.76rem">{{ m.notas }}</span>{% endif %}</td>
+                <td class="der destacado">{% if m.cantidad > 0 %}+{% endif %}{{ m.cantidad }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="vacio">
+        <strong>Sin movimientos</strong>
+        Cuando cargues cupones aparecerán aquí.
+      </div>
+    {% endif %}
+  </section>
+{% endblock %}

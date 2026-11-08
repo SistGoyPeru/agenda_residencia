@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block title %}{{ residencia.nombre }} · Ruta Residencias{% endblock %}
+
+{% block content %}
+  <div class="migas">
+    <a href="{% url 'residencia_list' %}">Residencias</a>
+    <span>›</span>
+    <span>{{ residencia.nombre }}</span>
+  </div>
+
+  <div class="detalle-cabecera">
+    <h1>{{ residencia.nombre }}</h1>
+    <p class="detalle-sub">
+      {% if residencia.direccion %}{{ residencia.direccion }}{% else %}Sin dirección{% endif %}
+    </p>
+    <div class="item-meta">
+      {% if residencia.zona %}<span class="chip">{{ residencia.zona.nombre }}</span>{% endif %}
+      <span class="chip">{{ residencia.frecuencia_semanal }} visita{{ residencia.frecuencia_semanal|pluralize:"s" }} / semana</span>
+      {% if residencia.dia_preferido %}<span class="chip">{{ residencia.get_dia_preferido_display }}</span>{% endif %}
+      {% if not residencia.activo %}<span class="chip chip-alerta">Inactiva</span>{% endif %}
+    </div>
+
+    {% if residencia.telefono %}
+      <div class="fila-botones mt-14">
+        <a class="boton boton-primario" href="tel:{{ residencia.telefono_enlace }}">Llamar {{ residencia.telefono }}</a>
+      </div>
+    {% endif %}
+    {% if residencia.horario or residencia.contacto %}
+      <p class="ayuda mt-8">
+        {% if residencia.horario %}Horario: {{ residencia.horario }}{% endif %}
+        {% if residencia.contacto %}{% if residencia.horario %} · {% endif %}Contacto: {{ residencia.contacto }}{% endif %}
+      </p>
+    {% endif %}
+  </div>
+
+  <div class="stats">
+    <div class="stat verde">
+      <span class="num">{{ hechas_semana }}</span>
+      <span class="eti">Esta semana</span>
+    </div>
+    <div class="stat">
+      <span class="num">{{ residencia.frecuencia_semanal }}</span>
+      <span class="eti">Objetivo</span>
+    </div>
+    <div class="stat ambar">
+      <span class="num">{{ residencia.orden_ruta }}</span>
+      <span class="eti">Orden</span>
+    </div>
+  </div>
+
+  <div class="fila-botones mt-20">
+    <a class="boton boton-primario" href="{% url 'visita_nueva' %}?residencia={{ residencia.pk }}">Nueva visita</a>
+    <a class="boton boton-fantasma" href="{% url 'residencia_editar' residencia.pk %}">Editar</a>
+  </div>
+
+  {% if residencia.notas %}
+    <div class="tarjeta mt-20">
+      <span class="etiqueta-mini">Notas de acceso</span>
+      <p style="margin:6px 0 0">{{ residencia.notas|linebreaksbr }}</p>
+    </div>
+  {% endif %}
+
+  <section class="seccion">
+    <div class="seccion-cabecera">
+      <h2 class="seccion-titulo">Historial de visitas</h2>
+    </div>
+    {% if visitas %}
+      <div class="lista">
+        {% for v in visitas %}
+          <a class="item" href="{% url 'visita_detalle' v.pk %}">
+            <span class="avatar">{{ v.fecha|date:"d" }}<span style="font-size:.6rem;display:block;margin-top:-2px">{{ v.fecha|date:"M" }}</span></span>
+            <div class="item-cuerpo">
+              <p class="item-titulo">{{ v.fecha|date:"l d/m/Y" }}</p>
+              <p class="item-sub">
+                {{ v.get_turno_display }} · {{ v.total_unidades }} unidad{{ v.total_unidades|pluralize:"es" }} · {{ v.total_cupones }} cupón{{ v.total_cupones|pluralize:"es" }}
+              </p>
+            </div>
+            <span class="pill {% if v.estado == 'E' %}pill-e{% elif v.estado == 'I' %}pill-i{% else %}pill-p{% endif %}">{{ v.get_estado_display }}</span>
+          </a>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="vacio">
+        <strong>Sin visitas todavía</strong>
+        Crea la primera visita para empezar el historial.
+      </div>
+    {% endif %}
+  </section>
+
+  <section class="seccion">
+    <a class="boton boton-peligro boton-bloque" href="{% url 'residencia_borrar' residencia.pk %}">Eliminar residencia</a>
+  </section>
+{% endblock %}

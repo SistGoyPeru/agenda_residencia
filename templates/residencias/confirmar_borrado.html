@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Eliminar · Ruta Residencias{% endblock %}
+
+{% block content %}
+  <div class="migas">
+    <a href="{% url 'agenda' %}">Agenda</a>
+    <span>›</span>
+    <span>Eliminar</span>
+  </div>
+
+  <div class="detalle-cabecera">
+    <h1>¿Eliminar «{{ objeto }}»?</h1>
+    <p class="detalle-sub">Esta acción no se puede deshacer.</p>
+  </div>
+
+  <form method="post" class="mt-20 js-confirm" data-mensaje="¿Seguro que quieres eliminar este registro?">
+    {% csrf_token %}
+    <div class="fila-botones">
+      <a class="boton boton-fantasma" href="{% if objeto.residencia %}{% url 'visita_detalle' objeto.pk %}{% else %}{% url 'residencia_detalle' objeto.pk %}{% endif %}">Cancelar</a>
+      <button class="boton boton-peligro" type="submit">Sí, eliminar</button>
+    </div>
+  </form>
+
+  {% if objeto.residencia %}
+    <p class="ayuda mt-20">Al borrar la visita se devuelven sus cupones al stock automáticamente.</p>
+  {% else %}
+    <p class="ayuda mt-20">Si la residencia tiene visitas registradas no se podrá borrar; desactívala en su ficha.</p>
+  {% endif %}
+{% endblock %}

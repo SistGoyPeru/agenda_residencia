@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+{% block title %}{% if visita %}Editar visita{% else %}Nueva visita{% endif %} · Ruta Residencias{% endblock %}
+
+{% block content %}
+  <div class="migas">
+    <a href="{% url 'agenda' %}">Agenda</a>
+    <span>›</span>
+    <span>{% if visita %}Editar visita{% else %}Nueva visita{% endif %}</span>
+  </div>
+
+  <div class="detalle-cabecera">
+    <h1>{% if visita %}Editar visita{% else %}Nueva visita{% endif %}</h1>
+    <p class="detalle-sub">Apunta los productos entregados y los cupones gastados.</p>
+  </div>
+
+  <form method="post" class="mt-20" id="form-visita">
+    {% csrf_token %}
+    {% if form.non_field_errors %}
+      <div class="aviso-flash error">{{ form.non_field_errors|join:", " }}</div>
+    {% endif %}
+
+    <div class="tarjeta">
+      <div class="campo-grupo">
+        <label class="campo-label" for="{{ form.residencia.id_for_label }}">Residencia *</label>
+        {{ form.residencia }}
+        {% for e in form.residencia.errors %}<p class="error">{{ e }}</p>{% endfor %}
+      </div>
+
+      <div class="grid-dos">
+        <div class="campo-grupo">
+          <label class="campo-label" for="{{ form.fecha.id_for_label }}">Fecha</label>
+          {{ form.fecha }}
+          {% for e in form.fecha.errors %}<p class="error">{{ e }}</p>{% endfor %}
+        </div>
+        <div class="campo-grupo">
+          <label class="campo-label" for="{{ form.turno.id_for_label }}">Turno</label>
+          {{ form.turno }}
+          {% for e in form.turno.errors %}<p class="error">{{ e }}</p>{% endfor %}
+        </div>
+      </div>
+
+      <div class="campo-grupo">
+        <label class="campo-label" for="{{ form.estado.id_for_label }}">Estado</label>
+        {{ form.estado }}
+        {% for e in form.estado.errors %}<p class="error">{{ e }}</p>{% endfor %}
+      </div>
+
+      <div class="campo-grupo">
+        <label class="campo-label" for="{{ form.notas.id_for_label }}">Notas</label>
+        {{ form.notas }}
+        {% for e in form.notas.errors %}<p class="error">{{ e }}</p>{% endfor %}
+      </div>
+    </div>
+
+    <section class="seccion">
+      <div class="seccion-cabecera">
+        <h2 class="seccion-titulo">Productos entregados</h2>
+        <button type="button" class="boton boton-mini boton-fantasma" id="anadir-fila">+ Añadir</button>
+      </div>
+
+      {{ formset.management_form }}
+      {% if formset.non_form_errors %}
+        <div class="aviso-flash error">{{ formset.non_form_errors|join:", " }}</div>
+      {% endif %}
+
+      <div id="filas-formset">
+        {% for f in formset %}
+          <div class="fila-formset">
+            {{ f.id }}
+            <div>
+              <span class="campo-mini-label">Producto</span>
+              {{ f.producto }}
+            </div>
+            <div>
+              <span class="campo-mini-label">Unid.</span>
+              {{ f.cantidad }}
+            </div>
+            <div>
+              <span class="campo-mini-label">Cupones</span>
+              {{ f.cupones }}
+            </div>
+            <button type="button" class="borrar-fila" aria-label="Quitar producto">×</button>
+            <span class="oculto">{{ f.DELETE }}</span>
+          </div>
+          {% if f.errors %}
+            <div class="aviso-flash error" style="margin-top:-4px">{{ f.errors }}</div>
+          {% endif %}
+        {% endfor %}
+      </div>
+
+      <p class="ayuda">Deja los cupones vacíos para calcularlos solos: unidades × cupones por unidad.</p>
+    </section>
+
+    <div class="fila-botones mt-20">
+      <a class="boton boton-fantasma" href="{% if visita %}{% url 'visita_detalle' visita.pk %}{% else %}{% url 'agenda' %}{% endif %}">Cancelar</a>
+      <button class="boton boton-primario" type="submit">Guardar visita</button>
+    </div>
+  </form>
+
+  {{ productos_cupones|json_script:"datos-cupones" }}
+
+  <div id="plantilla-fila" hidden>
+    <div class="fila-formset">
+      {{ formset.empty_form.id }}
+      <div>
+        <span class="campo-mini-label">Producto</span>
+        {{ formset.empty_form.producto }}
+      </div>
+      <div>
+        <span class="campo-mini-label">Unid.</span>
+        {{ formset.empty_form.cantidad }}
+      </div>
+      <div>
+        <span class="campo-mini-label">Cupones</span>
+        {{ formset.empty_form.cupones }}
+      </div>
+      <button type="button" class="borrar-fila" aria-label="Quitar producto">×</button>
+      <span class="oculto">{{ formset.empty_form.DELETE }}</span>
+    </div>
+  </div>
+{% endblock %}

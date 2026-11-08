@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Residencias · Ruta Residencias{% endblock %}
+
+{% block content %}
+  <div class="detalle-cabecera">
+    <div class="seccion-cabecera" style="margin-bottom:10px">
+      <h1 style="margin:0;font-size:1.35rem">Residencias</h1>
+      <a class="seccion-enlace" href="{% url 'residencia_nueva' %}">+ Añadir</a>
+    </div>
+    <form method="get" action="{% url 'residencia_list' %}">
+      <input class="campo" type="search" name="q" value="{{ q }}" placeholder="Buscar por nombre, zona, dirección o teléfono…">
+    </form>
+    <p class="ayuda mt-8">{{ activas }} residencia{{ activas|pluralize:"s" }} activa{{ activas|pluralize:"s" }}</p>
+  </div>
+
+  <section class="seccion">
+    {% if residencias %}
+      <div class="lista">
+        {% for r in residencias %}
+          <a class="item" href="{% url 'residencia_detalle' r.pk %}">
+            <span class="avatar">{{ r.nombre|first }}</span>
+            <div class="item-cuerpo">
+              <p class="item-titulo">{{ r.nombre }}</p>
+              <p class="item-sub">
+                {% if r.direccion %}{{ r.direccion }}{% else %}Sin dirección{% endif %}
+              </p>
+              <div class="item-meta">
+                {% if r.zona %}<span class="chip">{{ r.zona.nombre }}</span>{% endif %}
+                <span class="chip">{{ r.frecuencia_semanal }} / semana</span>
+                {% if r.telefono %}<span class="chip">{{ r.telefono }}</span>{% endif %}
+              </div>
+            </div>
+            <span class="flecha">›</span>
+          </a>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="vacio">
+        <strong>Sin resultados</strong>
+        No hay residencias que coincidan. Prueba otra búsqueda o añade una nueva.
+      </div>
+      <div class="mt-14">
+        <a class="boton boton-primario boton-bloque" href="{% url 'residencia_nueva' %}">Añadir residencia</a>
+      </div>
+    {% endif %}
+  </section>
+{% endblock %}

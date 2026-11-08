@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+{% block title %}Inicio · Ruta Residencias{% endblock %}
+
+{% block content %}
+  {% if siguiente %}
+    {% if siguiente.visita %}
+      <section class="hero">
+        <p class="hero-etiqueta">Siguiente parada</p>
+        <h1 class="hero-titulo">{{ siguiente.residencia.nombre }}</h1>
+        <p class="hero-texto">{{ siguiente.motivo }}</p>
+        <div class="hero-meta">
+          {% if siguiente.residencia.zona %}<span>{{ siguiente.residencia.zona.nombre }}</span>{% endif %}
+          <span>{{ siguiente.visita.get_turno_display }}</span>
+          {% if siguiente.residencia.horario %}<span>{{ siguiente.residencia.horario }}</span>{% endif %}
+        </div>
+        <div class="hero-acciones">
+          <a class="boton boton-blanco" href="{% url 'visita_detalle' siguiente.visita.pk %}">Abrir visita</a>
+          <a class="boton boton-fantasma" style="background:rgba(255,255,255,.14);color:#fff;border-color:rgba(255,255,255,.35)" href="{% url 'agenda' %}">Ver agenda</a>
+        </div>
+      </section>
+    {% else %}
+      <section class="hero hero-suave">
+        <p class="hero-etiqueta">Te recomiendo ir a</p>
+        <h1 class="hero-titulo">{{ siguiente.residencia.nombre }}</h1>
+        <p class="hero-texto">{{ siguiente.motivo }}</p>
+        <div class="hero-meta">
+          {% if siguiente.residencia.zona %}<span class="chip">{{ siguiente.residencia.zona.nombre }}</span>{% endif %}
+          {% if siguiente.residencia.telefono %}<span class="chip">{{ siguiente.residencia.telefono }}</span>{% endif %}
+        </div>
+        <div class="hero-acciones">
+          <a class="boton boton-primario" href="{% url 'visita_nueva' %}?residencia={{ siguiente.residencia.pk }}">Crear visita</a>
+          <a class="boton boton-fantasma" href="{% url 'residencia_detalle' siguiente.residencia.pk %}">Ver ficha</a>
+        </div>
+      </section>
+    {% endif %}
+  {% else %}
+    <section class="hero hero-suave">
+      <p class="hero-etiqueta">Todo al día</p>
+      <h1 class="hero-titulo">No quedan residencias pendientes</h1>
+      <p class="hero-texto">Has cubierto las visitas de la semana. Puedes adelantar la próxima o revisar la agenda.</p>
+      <div class="hero-acciones">
+        <a class="boton boton-primario" href="{% url 'agenda' %}">Ver agenda</a>
+      </div>
+    </section>
+  {% endif %}
+
+  <div class="stats">
+    <div class="stat">
+      <span class="num">{{ resumen_hoy.total }}</span>
+      <span class="eti">Hoy</span>
+    </div>
+    <div class="stat verde">
+      <span class="num">{{ resumen_hoy.entregadas }}</span>
+      <span class="eti">Hechas</span>
+    </div>
+    <div class="stat ambar">
+      <span class="num">{{ resumen_hoy.pendientes }}</span>
+      <span class="eti">Pendientes</span>
+    </div>
+  </div>
+
+  <section class="seccion">
+    <div class="seccion-cabecera">
+      <h2 class="seccion-titulo">Agenda de hoy</h2>
+      <a class="seccion-enlace" href="{% url 'agenda' %}">Ver semana ›</a>
+    </div>
+    {% if visitas_hoy %}
+      <div class="lista">
+        {% for v in visitas_hoy %}
+          <a class="item" href="{% url 'visita_detalle' v.pk %}">
+            <span class="avatar">{{ v.residencia.nombre|first }}</span>
+            <div class="item-cuerpo">
+              <p class="item-titulo">{{ v.residencia.nombre }}</p>
+              <p class="item-sub">
+                {{ v.get_turno_display }}{% if v.residencia.zona %} · {{ v.residencia.zona.nombre }}{% endif %}{% if v.residencia.direccion %} · {{ v.residencia.direccion }}{% endif %}
+              </p>
+            </div>
+            <span class="pill {% if v.estado == 'E' %}pill-e{% elif v.estado == 'I' %}pill-i{% else %}pill-p{% endif %}">{{ v.get_estado_display }}</span>
+          </a>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="vacio">
+        <strong>Sin visitas para hoy</strong>
+        Crea una visita o revisa las residencias pendientes de la semana.
+      </div>
+      <div class="mt-14">
+        <a class="boton boton-primario boton-bloque" href="{% url 'visita_nueva' %}">Nueva visita</a>
+      </div>
+    {% endif %}
+  </section>
+
+  <section class="seccion">
+    <div class="seccion-cabecera">
+      <h2 class="seccion-titulo">Pendientes de la semana</h2>
+      <a class="seccion-enlace" href="{% url 'agenda' %}">Agenda ›</a>
+    </div>
+    {% if pendientes %}
+      <div class="lista">
+        {% for fila in pendientes %}
+          <div class="item">
+            <span class="avatar">{{ fila.residencia.nombre|first }}</span>
+            <div class="item-cuerpo">
+              <p class="item-titulo">{{ fila.residencia.nombre }}</p>
+              <p class="item-sub">
+                {{ fila.hechas }} de {{ fila.residencia.frecuencia_semanal }} visitas hechas
+                {% if fila.residencia.zona %} · {{ fila.residencia.zona.nombre }}{% endif %}
+              </p>
+            </div>
+            <a class="boton boton-mini boton-primario" href="{% url 'visita_nueva' %}?residencia={{ fila.residencia.pk }}">Visitar</a>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="vacio">
+        <strong>Todo cubierto</strong>
+        Ninguna residencia se queda sin sus visitas esta semana.
+      </div>
+    {% endif %}
+  </section>
+
+  <section class="seccion">
+    <div class="seccion-cabecera">
+      <h2 class="seccion-titulo">Cupones</h2>
+      <a class="seccion-enlace" href="{% url 'cupones' %}">Gestionar ›</a>
+    </div>
+    <div class="tarjeta">
+      <div class="fila-botones" style="align-items:center;justify-content:space-between">
+        <div>
+          <span class="etiqueta-mini">En stock</span>
+          <p class="destacado" style="font-size:1.6rem;margin:2px 0 0">{{ total_cupones }}</p>
+        </div>
+        <div>
+          <span class="etiqueta-mini">Usados esta semana</span>
+          <p class="destacado" style="font-size:1.6rem;margin:2px 0 0">{{ cupones_semana }}</p>
+        </div>
+      </div>
+      {% if productos_bajos %}
+        <p class="etiqueta-mini mt-14">Aviso de stock bajo</p>
+        <div class="item-meta">
+          {% for p in productos_bajos %}
+            <span class="chip chip-alerta">{{ p.nombre }}: {{ p.stock }}</span>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="ayuda mt-14">Todos los productos tienen cupones suficientes.</p>
+      {% endif %}
+    </div>
+  </section>
+{% endblock %}

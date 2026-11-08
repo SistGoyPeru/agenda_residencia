@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block title %}{% if residencia %}Editar residencia{% else %}Nueva residencia{% endif %} · Ruta Residencias{% endblock %}
+
+{% block content %}
+  <div class="migas">
+    <a href="{% url 'residencia_list' %}">Residencias</a>
+    <span>›</span>
+    <span>{% if residencia %}Editar{% else %}Nueva{% endif %}</span>
+  </div>
+
+  <div class="detalle-cabecera">
+    <h1>{% if residencia %}{{ residencia.nombre }}{% else %}Nueva residencia{% endif %}</h1>
+    <p class="detalle-sub">Datos para la agenda y el contacto durante el reparto.</p>
+  </div>
+
+  <form method="post" class="mt-20">
+    {% csrf_token %}
+    {% if form.non_field_errors %}
+      <div class="aviso-flash error">{{ form.non_field_errors|join:", " }}</div>
+    {% endif %}
+
+    <div class="tarjeta">
+      <div class="campo-grupo">
+        <label class="campo-label" for="{{ form.nombre.id_for_label }}">Nombre *</label>
+        {{ form.nombre }}
+        {% for e in form.nombre.errors %}<p class="error">{{ e }}</p>{% endfor %}
+      </div>
+
+      <div class="campo-grupo">
+        <label class="campo-label" for="{{ form.direccion.id_for_label }}">Dirección</label>
+        {{ form.direccion }}
+        {% for e in form.direccion.errors %}<p class="error">{{ e }}</p>{% endfor %}
+      </div>
+
+      <div class="campo-grupo">
+        <label class="campo-label" for="{{ form.zona.id_for_label }}">Zona</label>
+        {{ form.zona }}
+        <p class="ayuda">Sin zona también vale. Se ordena la ruta por zona y luego por orden.</p>
+        {% for e in form.zona.errors %}<p class="error">{{ e }}</p>{% endfor %}
+      </div>
+
+      <div class="grid-dos">
+        <div class="campo-grupo">
+          <label class="campo-label" for="{{ form.contacto.id_for_label }}">Contacto</label>
+          {{ form.contacto }}
+          {% for e in form.contacto.errors %}<p class="error">{{ e }}</p>{% endfor %}
+        </div>
+        <div class="campo-grupo">
+          <label class="campo-label" for="{{ form.telefono.id_for_label }}">Teléfono</label>
+          {{ form.telefono }}
+          {% for e in form.telefono.errors %}<p class="error">{{ e }}</p>{% endfor %}
+        </div>
+      </div>
+
+      <div class="campo-grupo">
+        <label class="campo-label" for="{{ form.horario.id_for_label }}">Horario de entrega</label>
+        {{ form.horario }}
+        {% for e in form.horario.errors %}<p class="error">{{ e }}</p>{% endfor %}
+      </div>
+
+      <div class="grid-dos">
+        <div class="campo-grupo">
+          <label class="campo-label" for="{{ form.orden_ruta.id_for_label }}">Orden en la ruta</label>
+          {{ form.orden_ruta }}
+          {% for e in form.orden_ruta.errors %}<p class="error">{{ e }}</p>{% endfor %}
+        </div>
+        <div class="campo-grupo">
+          <label class="campo-label" for="{{ form.frecuencia_semanal.id_for_label }}">Visitas por semana</label>
+          {{ form.frecuencia_semanal }}
+          {% for e in form.frecuencia_semanal.errors %}<p class="error">{{ e }}</p>{% endfor %}
+        </div>
+      </div>
+
+      <div class="campo-grupo">
+        <label class="campo-label" for="{{ form.dia_preferido.id_for_label }}">Día preferido</label>
+        {{ form.dia_preferido }}
+        {% for e in form.dia_preferido.errors %}<p class="error">{{ e }}</p>{% endfor %}
+      </div>
+
+      <div class="campo-grupo">
+        <label class="campo-label" for="{{ form.notas.id_for_label }}">Notas de acceso</label>
+        {{ form.notas }}
+        {% for e in form.notas.errors %}<p class="error">{{ e }}</p>{% endfor %}
+      </div>
+
+      <div class="campo-check">
+        {{ form.activo }}
+        <label for="{{ form.activo.id_for_label }}" style="font-weight:700">Residencia activa</label>
+      </div>
+      {% for e in form.activo.errors %}<p class="error">{{ e }}</p>{% endfor %}
+    </div>
+
+    <div class="fila-botones mt-20">
+      <a class="boton boton-fantasma" href="{% if residencia %}{% url 'residencia_detalle' residencia.pk %}{% else %}{% url 'residencia_list' %}{% endif %}">Cancelar</a>
+      <button class="boton boton-primario" type="submit">Guardar residencia</button>
+    </div>
+  </form>
+{% endblock %}
