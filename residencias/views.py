@@ -1026,6 +1026,14 @@ def reporte_mensual_pdf(request):
                     Paragraph(str(resumen_residencia["cupones"]), celda),
                 ]
             )
+        filas.append(
+            [
+                Paragraph("Totales", celda),
+                Paragraph(str(sum(r["visitas"] for r in datos["por_residencia"])), celda),
+                Paragraph(str(sum(r["unidades"] for r in datos["por_residencia"])), celda),
+                Paragraph(str(sum(r["cupones"] for r in datos["por_residencia"])), celda),
+            ]
+        )
         tabla = Table(filas, colWidths=[9.4 * cm, 2.2 * cm, 2.2 * cm, 2.2 * cm], repeatRows=1)
         tabla.setStyle(
             TableStyle(
@@ -1057,12 +1065,22 @@ def reporte_mensual_pdf(request):
                     Paragraph(str(resumen_producto["cupones"]), celda),
                 ]
             )
+        filas.append(
+            [
+                Paragraph("Totales", celda),
+                Paragraph(str(sum(p["cantidad"] for p in datos["por_producto"])), celda),
+                Paragraph(str(sum(p["cupones"] for p in datos["por_producto"])), celda),
+            ]
+        )
         tabla = Table(filas, colWidths=[11.6 * cm, 2.2 * cm, 2.2 * cm], repeatRows=1)
         tabla.setStyle(
             TableStyle(
                 [
                     ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#0f766e")),
                     ("GRID", (0, 0), (-1, -1), 0.4, colors.HexColor("#cbd5e1")),
+                    ("ROWBACKGROUNDS", (0, 1), (-1, -2), [colors.white, colors.HexColor("#f8fafc")]),
+                    ("BACKGROUND", (0, -1), (-1, -1), colors.HexColor("#d7e3e0")),
+                    ("FONTNAME", (0, -1), (-1, -1), "Helvetica-Bold"),
                     ("ALIGN", (1, 1), (-1, -1), "RIGHT"),
                     ("TOPPADDING", (0, 0), (-1, -1), 4),
                     ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
@@ -1070,6 +1088,7 @@ def reporte_mensual_pdf(request):
             )
         )
         elementos.append(tabla)
+
 
     def pie(canvas, doc):
         canvas.saveState()
