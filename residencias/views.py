@@ -1,4 +1,5 @@
 ﻿from datetime import date, timedelta
+from functools import wraps
 
 from django.contrib import messages
 from django.contrib.auth import get_user_model, login
@@ -7,6 +8,22 @@ from django.db.models import Count, ProtectedError, Q, Sum
 from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
+
+
+def requiere_pro(view_func):
+    @wraps(view_func)
+    def _wrapped(request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return redirect("login")
+        perfil = perfil_de(request.user)
+        if not perfil.es_pro:
+            messages.warning(
+                request,
+                "Esta función requiere plan Pro. Pasa a Pro para continuar.",
+            )
+            return redirect("planes")
+        return view_func(request, *args, **kwargs)
+    return _wrapped
 
 from .forms import (
     MovimientoCuponForm,
@@ -417,6 +434,7 @@ def dashboard(request):
     return render(request, "residencias/dashboard.html", contexto)
 
 
+@requiere_pro
 def agenda(request):
     hoy = timezone.localdate()
     try:
@@ -459,6 +477,7 @@ def agenda(request):
     return render(request, "residencias/agenda.html", contexto)
 
 
+@requiere_pro
 def residencia_list(request):
     busqueda = request.GET.get("q", "").strip()
     residencias = Residencia.objects.filter(
@@ -484,6 +503,7 @@ def residencia_list(request):
     )
 
 
+@requiere_pro
 def residencia_form(request, pk=None):
     residencia = (
         get_object_or_404(Residencia, pk=pk, propietario=request.user)
@@ -515,6 +535,7 @@ def residencia_form(request, pk=None):
     )
 
 
+@requiere_pro
 def residencia_detalle(request, pk):
     residencia = get_object_or_404(
         Residencia.objects.select_related("zona"),
@@ -539,6 +560,7 @@ def residencia_detalle(request, pk):
     return render(request, "residencias/residencia_detalle.html", contexto)
 
 
+@requiere_pro
 def residencia_borrar(request, pk):
     residencia = get_object_or_404(
         Residencia, pk=pk, propietario=request.user
@@ -560,6 +582,7 @@ def residencia_borrar(request, pk):
     )
 
 
+@requiere_pro
 def zona_list(request):
     zonas = Zona.objects.filter(propietario=request.user).annotate(
         total_residencias=Count("residencias")
@@ -567,6 +590,7 @@ def zona_list(request):
     return render(request, "residencias/zona_list.html", {"zonas": zonas})
 
 
+@requiere_pro
 def zona_form(request, pk=None):
     zona = (
         get_object_or_404(Zona, pk=pk, propietario=request.user) if pk else None
@@ -586,6 +610,7 @@ def zona_form(request, pk=None):
     )
 
 
+@requiere_pro
 def zona_borrar(request, pk):
     zona = get_object_or_404(Zona, pk=pk, propietario=request.user)
     total = zona.residencias.count()
@@ -607,6 +632,7 @@ def zona_borrar(request, pk):
     )
 
 
+@requiere_pro
 def producto_list(request):
     productos = productos_con_stock(request.user, solo_activos=False)
     return render(
@@ -614,6 +640,7 @@ def producto_list(request):
     )
 
 
+@requiere_pro
 def producto_form(request, pk=None):
     producto = (
         get_object_or_404(Producto, pk=pk, propietario=request.user)
@@ -637,6 +664,7 @@ def producto_form(request, pk=None):
     )
 
 
+@requiere_pro
 def producto_borrar(request, pk):
     producto = get_object_or_404(Producto, pk=pk, propietario=request.user)
     if request.method == "POST":
@@ -655,6 +683,7 @@ def producto_borrar(request, pk):
     )
 
 
+@requiere_pro
 def cupones(request):
     productos = productos_con_stock(request.user)
     inicio, fin = rango_semana()
@@ -673,6 +702,7 @@ def cupones(request):
     return render(request, "residencias/cupones.html", contexto)
 
 
+@requiere_pro
 def cupon_cargar(request):
     if request.method == "POST":
         form = MovimientoCuponForm(request.POST, user=request.user)
@@ -688,6 +718,7 @@ def cupon_cargar(request):
     return redirect("cupones")
 
 
+@requiere_pro
 def visita_form(request, pk=None):
     visita = (
         get_object_or_404(Visita, pk=pk, residencia__propietario=request.user)
@@ -733,6 +764,7 @@ def visita_form(request, pk=None):
     )
 
 
+@requiere_pro
 def visita_detalle(request, pk):
     visita = get_object_or_404(
         Visita.objects.select_related(
@@ -746,6 +778,7 @@ def visita_detalle(request, pk):
     )
 
 
+@requiere_pro
 def visita_estado(request, pk, estado):
     visita = get_object_or_404(
         Visita, pk=pk, residencia__propietario=request.user
@@ -763,6 +796,7 @@ def visita_estado(request, pk, estado):
     return redirect("agenda")
 
 
+@requiere_pro
 def visita_borrar(request, pk):
     visita = get_object_or_404(
         Visita, pk=pk, residencia__propietario=request.user
@@ -869,6 +903,7 @@ def datos_reporte_mensual(request):
     return contexto
 
 
+@requiere_pro
 def reporte_mensual(request):
     return render(
         request,
@@ -877,6 +912,7 @@ def reporte_mensual(request):
     )
 
 
+@requiere_pro
 def reporte_mensual_pdf(request):
     from io import BytesIO
 
