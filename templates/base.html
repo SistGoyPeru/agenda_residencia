@@ -11,6 +11,9 @@
   <link rel="icon" type="image/png" sizes="16x16" href="{% static 'img/favicon-16.png' %}?v=4">
   <link rel="apple-touch-icon" href="{% static 'img/apple-touch-icon.png' %}?v=4">
   <link rel="manifest" href="{% static 'site.webmanifest' %}?v=4">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Ruta Residencias">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 </head>
 <body>
   <div class="app">
@@ -115,6 +118,13 @@
   </div>
   <script src="{% static 'js/app.js' %}"></script>
   {% block scripts %}{% endblock %}
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/static/js/service-worker.js')
+      .then(() => console.log("SW registrado"))
+      .catch((err) => console.log("SW error:", err));
+  }
+</script>
 </body>
 </html>
 
