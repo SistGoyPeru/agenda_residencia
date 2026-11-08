@@ -89,7 +89,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LOGIN_URL = "login"
 LOGIN_REDIRECT_URL = "landing"
-LOGOUT_REDIRECT_URL = "login"
+LOGOUT_REDIRECT_URL = "landing"
 
 LANGUAGE_CODE = "es"
 TIME_ZONE = "Europe/Madrid"
