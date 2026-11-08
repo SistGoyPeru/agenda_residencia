@@ -971,6 +971,16 @@ def reporte_mensual_pdf(request):
                     Paragraph(str(fila["cupones"]), celda),
                 ]
             )
+        filas.append(
+            [
+                Paragraph("Totales", celda),
+                Paragraph("", celda),
+                Paragraph("", celda),
+                Paragraph("", celda),
+                Paragraph(str(datos["total_unidades"]), celda),
+                Paragraph(str(datos["total_cupones"]), celda),
+            ]
+        )
         tabla = Table(
             filas,
             colWidths=[1.7 * cm, 4.1 * cm, 1.7 * cm, 5.7 * cm, 1.3 * cm, 1.3 * cm],
@@ -983,7 +993,9 @@ def reporte_mensual_pdf(request):
                     ("GRID", (0, 0), (-1, -1), 0.4, colors.HexColor("#cbd5e1")),
                     ("VALIGN", (0, 0), (-1, -1), "TOP"),
                     ("ALIGN", (4, 1), (5, -1), "RIGHT"),
-                    ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#f8fafc")]),
+                    ("ROWBACKGROUNDS", (0, 1), (-1, -2), [colors.white, colors.HexColor("#f8fafc")]),
+                    ("BACKGROUND", (0, -1), (-1, -1), colors.HexColor("#d7e3e0")),
+                    ("FONTNAME", (0, -1), (-1, -1), "Helvetica-Bold"),
                     ("TOPPADDING", (0, 0), (-1, -1), 4),
                     ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
                 ]
