@@ -606,6 +606,24 @@ def producto_form(request, pk=None):
     )
 
 
+def producto_borrar(request, pk):
+    producto = get_object_or_404(Producto, pk=pk, propietario=request.user)
+    if request.method == "POST":
+        try:
+            producto.delete()
+            messages.success(request, f"Producto «{producto.nombre}» eliminado.")
+            return redirect("producto_list")
+        except ProtectedError:
+            messages.error(
+                request,
+                "No se puede borrar el producto: se ha usado en visitas registradas.",
+            )
+            return redirect("producto_list")
+    return render(
+        request, "residencias/producto_confirmar_borrado.html", {"objeto": producto}
+    )
+
+
 def cupones(request):
     productos = productos_con_stock(request.user)
     inicio, fin = rango_semana()

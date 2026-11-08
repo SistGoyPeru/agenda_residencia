@@ -36,6 +36,7 @@
               <p class="ayuda">Quedan <strong>{{ p.stock }}</strong> de {{ p.cargados }} cupones · {{ p.usados }} usados</p>
             </div>
             <a class="boton boton-mini boton-fantasma" href="{% url 'producto_editar' p.pk %}">Editar</a>
+            <a class="boton boton-mini boton-fantasma" href="{% url 'producto_borrar' p.pk %}">Eliminar</a>
           </div>
         {% endfor %}
       </div>

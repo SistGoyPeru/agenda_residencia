@@ -82,7 +82,15 @@
         </svg>
         <span>Residencias</span>
       </a>
-      <a class="tab {% if '/cupones/' in request.path or '/productos/' in request.path %}activo{% endif %}" href="{% url 'cupones' %}">
+      <a class="tab {% if '/productos/' in request.path %}activo{% endif %}" href="{% url 'producto_list' %}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+          <line x1="3" y1="9" x2="21" y2="9"></line>
+          <circle cx="12" cy="15" r="1"></circle>
+        </svg>
+        <span>Productos</span>
+      </a>
+      <a class="tab {% if '/cupones/' in request.path %}activo{% endif %}" href="{% url 'cupones' %}">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M3 8a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2 2 2 0 0 0 0 4 2 2 0 0 1-2 2H5a2 2 0 0 1-2-2 2 2 0 0 0 0-4z"></path>
           <path d="M13 6v2M13 11v2M13 16v2"></path>

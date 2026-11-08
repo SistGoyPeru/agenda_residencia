@@ -55,6 +55,9 @@ urlpatterns = [
     path(
         "productos/<int:pk>/editar/", views.producto_form, name="producto_editar"
     ),
+    path(
+        "productos/<int:pk>/borrar/", views.producto_borrar, name="producto_borrar"
+    ),
     path("cupones/", views.cupones, name="cupones"),
     path("cupones/cargar/", views.cupon_cargar, name="cupon_cargar"),
     path("visitas/nueva/", views.visita_form, name="visita_nueva"),
