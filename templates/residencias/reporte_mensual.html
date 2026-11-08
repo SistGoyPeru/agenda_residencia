@@ -139,34 +139,6 @@
     </section>
   {% endif %}
 
-  {% if por_producto %}
-    <section class="seccion">
-      <div class="seccion-cabecera">
-        <h2>Resumen por producto</h2>
-      </div>
-      <div class="tarjeta tabla-envoltura">
-        <table class="tabla">
-          <thead>
-            <tr>
-              <th>Producto</th>
-              <th class="num">Unidades</th>
-              <th class="num">Cupones</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for resumen in por_producto %}
-              <tr>
-                <td>{{ resumen.producto.nombre }}</td>
-                <td class="num">{{ resumen.cantidad }}</td>
-                <td class="num">{{ resumen.cupones }}</td>
-              </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-    </section>
-  {% endif %}
-
   <p class="ayuda mt-20">
     {% if perfil.empresa %}{{ perfil.empresa }} · {% endif %}
     Informe generado con Ruta Residencias.
