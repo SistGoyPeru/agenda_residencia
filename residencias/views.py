@@ -355,6 +355,12 @@ def usuario_activar_plan(request, pk):
     return redirect("usuarios")
 
 
+def landing(request):
+    if request.user.is_authenticated:
+        return redirect("dashboard")
+    return render(request, "residencias/landing.html")
+
+
 def dashboard(request):
     hoy = timezone.localdate()
     inicio, fin = rango_semana(hoy)

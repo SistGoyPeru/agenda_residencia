@@ -60,7 +60,7 @@
     </main>
 
     <nav class="tabbar" aria-label="NavegaciÃ³n principal">
-      <a class="tab {% if request.path == '/' %}activo{% endif %}" href="{% url 'dashboard' %}">
+      <a class="tab {% if request.resolver_match and request.resolver_match.url_name == 'dashboard' %}activo{% endif %}" href="{% url 'dashboard' %}">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M3 10.5 12 3l9 7.5"></path>
           <path d="M5 9.5V21h14V9.5"></path>
