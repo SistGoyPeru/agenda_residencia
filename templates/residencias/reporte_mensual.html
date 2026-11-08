@@ -11,7 +11,7 @@
       </p>
     </div>
     <span class="fila-botones">
-      <a class="boton boton-mini boton-fantasma" href="{% url 'reporte_mensual_pdf' %}?mes={{ mes }}{% if residencia_id %}&amp;residencia={{ residencia_id }}{% endif %}">Descargar PDF</a>
+      <a class="boton boton-mini boton-fantasma" href="{% url 'reporte_mensual_pdf' %}?mes={{ mes }}{% if residencia_id %}&amp;residencia={{ residencia_id }}{% endif %}" target="_blank">Descargar PDF</a>
       <button class="boton boton-mini boton-fantasma" type="button" onclick="window.print()">Imprimir</button>
     </span>
   </div>
