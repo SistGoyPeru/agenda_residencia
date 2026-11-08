@@ -851,6 +851,15 @@ textarea.campo {
   font-weight: 700;
 }
 
+@media (max-width: 559px) {
+  .stats {
+    grid-template-columns: 1fr;
+  }
+  .tabbar {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
 @media (min-width: 560px) {
   .contenido {
     padding: 22px 22px 120px;
