@@ -1074,7 +1074,7 @@ def reporte_mensual_pdf(request):
         buffer.getvalue(), content_type="application/pdf"
     )
     respuesta["Content-Disposition"] = (
-        f'inline; filename="informe-entregas-{datos["mes"]}.pdf"'
+        f'attachment; filename="informe-entregas-{datos["mes"]}.pdf"'
     )
     return respuesta
 
