@@ -711,7 +711,7 @@ def visita_estado(request, pk, estado):
             )
         else:
             messages.error(request, "Estado no vÃ¡lido.")
-    return redirect("visita_detalle", pk=pk)
+    return redirect("agenda")
 
 
 def visita_borrar(request, pk):
