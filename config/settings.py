@@ -110,6 +110,12 @@ STORAGES = {
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+# WhiteNoise: servir archivos est?ticos en producci?n
+WHITENOISE_AUTOREFRESH = True
+WHITENOISE_USE_FINDERS = True
+WHITENOISE_MAX_AGE = 31536900
+WHITENOISE_SKIP_COMPRESS_EXTENSIONS = ["jpg", "jpeg", "png", "gif", "webp", "zip", "svg", "woff", "woff2"]
+
 # Cabeceras para que Render (proxy HTTPS) funcione bien.
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 if not DEBUG:
