@@ -372,6 +372,7 @@ def usuario_activar_plan(request, pk):
     return redirect("usuarios")
 
 
+@login_not_required
 def landing(request):
     if request.user.is_authenticated:
         return redirect("dashboard")
