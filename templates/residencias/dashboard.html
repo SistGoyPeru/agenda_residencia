@@ -198,4 +198,38 @@
       {% endif %}
     </div>
   </section>
+
+  {% if request.user.is_staff and usuarios_stats %}
+    <section class="seccion">
+      <div class="seccion-cabecera">
+        <h2 class="seccion-titulo">Estadísticas por usuario</h2>
+      </div>
+      <div class="tabla-envoltura">
+        <table class="tabla">
+          <thead>
+            <tr>
+              <th>Usuario</th>
+              <th class="num">Residencias</th>
+              <th class="num">Entregadas</th>
+              <th class="num">Pendientes</th>
+              <th class="num">Cupones</th>
+              <th class="num">Productos</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for fila in usuarios_stats %}
+              <tr>
+                <td>{{ fila.usuario.username }}</td>
+                <td class="num">{{ fila.residencias }}</td>
+                <td class="num">{{ fila.entregadas }}</td>
+                <td class="num">{{ fila.pendientes }}</td>
+                <td class="num">{{ fila.cupones }}</td>
+                <td class="num">{{ fila.productos }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  {% endif %}
 {% endblock %}

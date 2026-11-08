@@ -370,6 +370,32 @@ def dashboard(request):
         "incidencias": sum(v.estado == Visita.Estado.INCIDENCIA for v in visitas_hoy),
     }
     productos = productos_con_stock(request.user)
+    usuarios_stats = []
+    if request.user.is_staff:
+        from django.contrib.auth import get_user_model
+
+        Usuario = get_user_model()
+        for u in Usuario.objects.all().order_by("username"):
+            usuarios_stats.append(
+                {
+                    "usuario": u,
+                    "residencias": Residencia.objects.filter(propietario=u).count(),
+                    "entregadas": Visita.objects.filter(
+                        residencia__propietario=u,
+                        estado=Visita.Estado.ENTREGADA,
+                        fecha__range=(inicio, fin),
+                    ).count(),
+                    "pendientes": Visita.objects.filter(
+                        residencia__propietario=u,
+                        estado=Visita.Estado.PENDIENTE,
+                        fecha__range=(inicio, fin),
+                    ).count(),
+                    "cupones": cupones_usados_en(u, inicio, fin),
+                    "productos": Producto.objects.filter(
+                        propietario=u, activo=True
+                    ).count(),
+                }
+            )
     contexto = {
         "hoy": hoy,
         "visitas_hoy": visitas_hoy,
@@ -382,6 +408,7 @@ def dashboard(request):
         "cupones_semana": cupones_usados_en(request.user, inicio, fin),
         "total_cupones": sum(p.stock for p in productos),
         "estado": estado_plan(request.user),
+        "usuarios_stats": usuarios_stats,
     }
     return render(request, "residencias/dashboard.html", contexto)
 
