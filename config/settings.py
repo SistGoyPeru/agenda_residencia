@@ -23,7 +23,7 @@ if host_render and host_render not in ALLOWED_HOSTS:
     ALLOWED_HOSTS.append(host_render)
 
 CSRF_TRUSTED_ORIGINS = env_list(
-    "CSRF_TRUSTED_ORIGINS", "https://*.onrender.com"
+    "CSRF_TRUSTED_ORIGINS", "https://*.onrender.com,http://127.0.0.1:8123,http://localhost:8123"
 )
 
 INSTALLED_APPS = [
@@ -43,7 +43,6 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
-    "django.contrib.auth.middleware.LoginRequiredMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
