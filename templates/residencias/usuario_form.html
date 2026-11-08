@@ -1,0 +1,76 @@
+﻿{% extends "base.html" %}
+{% block title %}{% if accion == 'crear' %}Nuevo usuario{% else %}Editar «{{ usuario.username }}»{% endif %} · Ruta Residencias{% endblock %}
+
+{% block content %}
+  <div class="detalle-cabecera">
+    <h1 style="margin:0;font-size:1.35rem">{% if accion == 'crear' %}Nuevo usuario{% else %}Editar «{{ usuario.username }}»{% endif %}</h1>
+    <p class="detalle-sub">Datos de cuenta, plan y empresa.</p>
+  </div>
+
+  <form method="post" class="tarjeta mt-14">
+    {% csrf_token %}
+    <div class="grid-dos">
+      <div class="campo-grupo">
+        <label class="campo-label">Usuario</label>
+        <input class="campo" type="text" name="username"{% if usuario %} value="{{ usuario.username }}" disabled{% else %} required{% endif %}>
+      </div>
+      <div class="campo-grupo">
+        <label class="campo-label">Email</label>
+        <input class="campo" type="email" name="email" value="{{ usuario.email|default:'' }}">
+      </div>
+      <div class="campo-grupo">
+        <label class="campo-label">{% if accion == 'crear' %}Clave{% else %}Nueva clave (dejar vacío para no cambiar){% endif %}</label>
+        <input class="campo" type="password" name="password"{% if accion == 'crear' %} required{% else %} autocomplete="new-password"{% endif %}>
+      </div>
+      <div class="campo-grupo">
+        <label class="campo-label">Plan</label>
+        <select class="campo" name="plan">
+          <option value="GRATIS"{% if accion == 'editar' and perfil.plan == 'GRATIS' %} selected{% endif %}>Gratis (hasta 3 residencias)</option>
+          <option value="PRO"{% if accion == 'editar' and perfil.plan == 'PRO' %} selected{% endif %}>Pro (ilimitado)</option>
+        </select>
+      </div>
+      <div class="campo-grupo">
+        <label class="campo-label">Vence el</label>
+        <input class="campo" type="date" name="activo_hasta"{% if accion == 'editar' and perfil.activo_hasta %} value="{{ perfil.activo_hasta|date:'Y-m-d' }}"{% endif %}>
+      </div>
+    </div>
+
+    <div class="campo-grupo">
+      <label class="campo-label">Empresa</label>
+      <input class="campo" type="text" name="empresa" placeholder="Transportes García S.L." value="{{ perfil.empresa|default:'' }}">
+    </div>
+
+    <div class="grid-dos">
+      <div class="campo-grupo">
+        <label class="campo-label">CIF/NIF</label>
+        <input class="campo" type="text" name="cif" placeholder="B12345678" value="{{ perfil.cif|default:'' }}">
+      </div>
+      <div class="campo-grupo">
+        <label class="campo-label">Teléfono</label>
+        <input class="campo" type="tel" name="telefono" placeholder="600 000 000" value="{{ perfil.telefono|default:'' }}">
+      </div>
+    </div>
+
+    <div class="grid-dos">
+      <div class="campo-grupo">
+        <label class="campo-label">Email de contacto</label>
+        <input class="campo" type="email" name="email_contacto" placeholder="contacto@empresa.com" value="{{ perfil.email_contacto|default:'' }}">
+      </div>
+      <div class="campo-grupo">
+        <label class="campo-label">Dirección</label>
+        <input class="campo" type="text" name="direccion" placeholder="Calle, número, ciudad" value="{{ perfil.direccion|default:'' }}">
+      </div>
+    </div>
+
+    <div class="campo-grupo">
+      <label class="campo-label">Web</label>
+      <input class="campo" type="url" name="web" placeholder="https://tuempresa.com" value="{{ perfil.web|default:'' }}">
+    </div>
+  </div>
+
+  <div class="fila-botones mt-14">
+    <a class="boton boton-fantasma" href="{% url 'usuarios' %}">Volver</a>
+    <button class="boton boton-primario" type="submit">Guardar</button>
+  </div>
+</form>
+{% endblock %}

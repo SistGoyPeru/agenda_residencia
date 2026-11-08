@@ -1,0 +1,18 @@
+﻿{% extends "base.html" %}
+{% block title %}Eliminar usuario · Ruta Residencias{% endblock %}
+
+{% block content %}
+  <div class="detalle-cabecera">
+    <h1 style="margin:0;font-size:1.35rem">Eliminar usuario</h1>
+    <p class="detalle-sub">¿Estás seguro de eliminar «{{ usuario.username }}»?</p>
+  </div>
+
+  <form method="post" class="tarjeta mt-14">
+    {% csrf_token %}
+    <p class="ayuda">Esta acción elimina también las residencias, visitas y cupones de esta cuenta.</p>
+    <div class="fila-botones mt-14">
+      <a class="boton boton-fantasma" href="{% url 'usuarios' %}">Volver</a>
+      <button class="boton boton-primario" type="submit">Eliminar</button>
+    </div>
+  </form>
+{% endblock %}

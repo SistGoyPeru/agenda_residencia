@@ -1,9 +1,14 @@
-{% extends "base.html" %}
+﻿{% extends "base.html" %}
 {% block title %}Usuarios · Ruta Residencias{% endblock %}
 
 {% block content %}
   <div class="detalle-cabecera">
-    <h1>Usuarios</h1>
+    <div class="seccion-cabecera" style="margin-bottom:10px">
+      <h1 style="margin:0;font-size:1.35rem">Usuarios</h1>
+      <span class="fila-botones">
+        <a class="seccion-enlace" href="{% url 'usuario_nueva' %}">+ Nuevo usuario</a>
+      </span>
+    </div>
     <p class="detalle-sub">Clientes con cuenta y su plan actual.</p>
   </div>
 
@@ -11,12 +16,7 @@
     <table class="tabla">
       <thead>
         <tr>
-          <th>Usuario</th>
-          <th>Email</th>
-          <th>Plan</th>
-          <th>Activo hasta</th>
-          <th class="num">Residencias</th>
-          <th></th>
+          <th>Usuario</th><th>Email</th><th>Plan</th><th>Vence</th><th class="num">Residencias</th><th class="num">Acciones</th>
         </tr>
       </thead>
       <tbody>
@@ -27,11 +27,17 @@
             <td>{{ usuario.perfil.get_plan_display }}</td>
             <td>{% if usuario.perfil.activo_hasta %}{{ usuario.perfil.activo_hasta|date:"d/m/Y" }}{% else %}—{% endif %}</td>
             <td class="num">{{ usuario.perfil.residencias.count }}</td>
-            <td class="num"><a class="seccion-enlace" href="{% url 'admin:auth_user_change' usuario.pk %}">Administrar ›</a>
-              <form method="post" action="{% url 'usuario_activar_plan' usuario.pk %}" style="display:inline" onsubmit="return confirm('Activar plan Pro de 30 dias?');">
+            <td class="num">
+              <a class="seccion-enlace" href="{% url 'usuario_editar' usuario.pk %}">Editar</a>
+              <form method="post" action="{% url 'usuario_borrar' usuario.pk %}" style="display:inline" onsubmit="return confirm('Eliminar usuario?');">
+                {% csrf_token %}
+                <button class="boton boton-mini boton-fantasma" type="submit">Borrar</button>
+              </form>
+              <form method="post" action="{% url 'usuario_activar_plan' usuario.pk %}" style="display:inline" onsubmit="return confirm('Activar/renovar plan Pro por 30 días?');">
                 {% csrf_token %}
                 <button class="boton boton-mini boton-primario" type="submit">Activar Pro</button>
-              </form></td>
+              </form>
+            </td>
           </tr>
         {% endfor %}
       </tbody>
