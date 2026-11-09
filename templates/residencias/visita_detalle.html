@@ -45,12 +45,12 @@
       <div class="lista">
         {% for linea in visita.lineas.all %}
           <div class="item">
-            <span class="avatar">{{ linea.producto.nombre|first }}</span>
+            <span class="avatar">C</span>
             <div class="item-cuerpo">
-              <p class="item-titulo">{{ linea.producto.nombre }}</p>
-              <p class="item-sub">{{ linea.cantidad }} unidad{{ linea.cantidad|pluralize:"es" }} · {{ linea.cupones }} cupón{{ linea.cupones|pluralize:"es" }}</p>
+              <p class="item-titulo">Cupón</p>
+              <p class="item-sub">{{ linea.cupones }} cupón{{ linea.cupones|pluralize:"es" }}</p>
             </div>
-            <span class="destacado">{{ linea.cantidad }}</span>
+            <span class="destacado">{{ linea.cupones }}</span>
           </div>
         {% endfor %}
       </div>

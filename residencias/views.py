@@ -86,19 +86,11 @@ def productos_con_stock(usuario, solo_activos=True):
         .values("producto_id")
         .annotate(total=Sum("cantidad"))
     }
-    usados = {
-        fila["producto_id"]: fila["total"]
-        for fila in VisitaProducto.objects.filter(
-            visita__residencia__propietario=usuario,
-            visita__estado=Visita.Estado.ENTREGADA,
-        )
-        .values("producto_id")
-        .annotate(total=Sum("cupones"))
-    }
+    usados = {}
 
     for producto in productos:
         producto.cargados = cargados.get(producto.pk, 0)
-        producto.usados = usados.get(producto.pk, 0)
+        producto.usados = 0
         producto.stock = producto.cargados - producto.usados
         producto.bajo = producto.stock <= producto.stock_minimo
         if producto.cargados > 0:
@@ -548,7 +540,7 @@ def residencia_detalle(request, pk):
     inicio, fin = rango_semana()
     visitas = list(
         residencia.visitas.select_related("residencia").prefetch_related(
-            "lineas__producto"
+            "lineas"
         )[:40]
     )
     contexto = {
@@ -749,12 +741,6 @@ def visita_form(request, pk=None):
         formset = VisitaProductoFormSet(
             instance=visita, form_kwargs={"user": request.user}
         )
-    productos_cupones = {
-        str(p.pk): p.cupones_por_unidad
-        for p in Producto.objects.filter(
-            propietario=request.user, activo=True
-        )
-    }
     return render(
         request,
         "residencias/visita_form.html",
@@ -762,7 +748,6 @@ def visita_form(request, pk=None):
             "form": form,
             "formset": formset,
             "visita": visita,
-            "productos_cupones": productos_cupones,
         },
     )
 
@@ -772,7 +757,7 @@ def visita_detalle(request, pk):
     visita = get_object_or_404(
         Visita.objects.select_related(
             "residencia", "residencia__zona"
-        ).prefetch_related("lineas__producto"),
+        ).prefetch_related("lineas"),
         pk=pk,
         residencia__propietario=request.user,
     )
@@ -851,7 +836,6 @@ def datos_reporte_mensual(request):
 
     filas = []
     por_residencia = {}
-    por_producto = {}
     por_fecha = {}
     total_unidades = 0
     total_cupones = 0
@@ -902,13 +886,6 @@ def datos_reporte_mensual(request):
         res_fecha["visitas"] += 1
         res_fecha["unidades"] += unidades
         res_fecha["cupones"] += cupones
-        for linea in visita.lineas.all():
-            producto = por_producto.setdefault(
-                linea.producto_id,
-                {"producto": linea.producto, "cantidad": 0, "cupones": 0},
-            )
-            producto["cantidad"] += linea.cantidad
-            producto["cupones"] += linea.cupones
 
     contexto = {
         "mes": inicio.strftime("%Y-%m"),
@@ -921,9 +898,6 @@ def datos_reporte_mensual(request):
         "residencia_id": residencia_id,
         "por_residencia": sorted(
             por_residencia.values(), key=lambda r: r["residencia"].nombre
-        ),
-        "por_producto": sorted(
-            por_producto.values(), key=lambda p: p["producto"].nombre
         ),
         "por_fecha": sorted(
             por_fecha.values(), key=lambda f: f["fecha"]

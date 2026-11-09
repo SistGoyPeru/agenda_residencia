@@ -35,53 +35,27 @@ class CuponesTests(TestCase):
             nombre="Residencia Test", propietario=self.usuario
         )
 
-    def test_stock_descuenta_solo_visitas_entregadas(self):
-        MovimientoCupon.objects.create(producto=self.producto, cantidad=10)
-        entregada = Visita.objects.create(
-            residencia=self.residencia,
-            fecha=timezone.localdate(),
-            turno=Visita.Turno.MANANA,
-            estado=Visita.Estado.ENTREGADA,
-        )
-        VisitaProducto.objects.create(
-            visita=entregada, producto=self.producto, cantidad=2, cupones=2
-        )
-        pendiente = Visita.objects.create(
-            residencia=self.residencia,
-            fecha=timezone.localdate() + timedelta(days=1),
-            turno=Visita.Turno.MANANA,
-            estado=Visita.Estado.PENDIENTE,
-        )
-        VisitaProducto.objects.create(
-            visita=pendiente, producto=self.producto, cantidad=5, cupones=5
-        )
-        self.assertEqual(self.producto.stock_actual(), 8)
-
     def test_cupones_automaticos_al_guardar_linea(self):
-        producto = Producto.objects.create(
-            nombre="Toallitas", cupones_por_unidad=2, propietario=self.usuario
-        )
         visita = Visita.objects.create(
             residencia=self.residencia, fecha=timezone.localdate()
         )
         linea = VisitaProducto.objects.create(
-            visita=visita, producto=producto, cantidad=3
+            visita=visita, cupones=3
         )
-        self.assertEqual(linea.cupones, 6)
+        self.assertEqual(linea.cupones, 3)
 
     def test_borrar_visita_devuelve_cupones(self):
-        MovimientoCupon.objects.create(producto=self.producto, cantidad=10)
         visita = Visita.objects.create(
             residencia=self.residencia,
             fecha=timezone.localdate(),
             estado=Visita.Estado.ENTREGADA,
         )
         VisitaProducto.objects.create(
-            visita=visita, producto=self.producto, cantidad=4, cupones=4
+            visita=visita, cupones=4
         )
-        self.assertEqual(self.producto.stock_actual(), 6)
+        self.assertEqual(visita.total_cupones, 4)
         visita.delete()
-        self.assertEqual(self.producto.stock_actual(), 10)
+        self.assertEqual(VisitaProducto.objects.count(), 0)
 
 
 class SiguienteResidenciaTests(TestCase):
@@ -198,9 +172,7 @@ class VistasTests(TestCase):
                 "lineas-INITIAL_FORMS": "0",
                 "lineas-MIN_NUM_FORMS": "0",
                 "lineas-MAX_NUM_FORMS": "1000",
-                "lineas-0-producto": self.producto.pk,
-                "lineas-0-cantidad": "3",
-                "lineas-0-cupones": "",
+                "lineas-0-cupones": "3",
             },
         )
         self.assertEqual(respuesta.status_code, 302)

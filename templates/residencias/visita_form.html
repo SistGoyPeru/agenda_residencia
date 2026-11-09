@@ -69,18 +69,10 @@
           <div class="fila-formset">
             {{ f.id }}
             <div>
-              <span class="campo-mini-label">Producto</span>
-              {{ f.producto }}
-            </div>
-            <div>
-              <span class="campo-mini-label">Unid.</span>
-              {{ f.cantidad }}
-            </div>
-            <div>
               <span class="campo-mini-label">Cupones</span>
               {{ f.cupones }}
             </div>
-            <button type="button" class="borrar-fila" aria-label="Quitar producto">×</button>
+            <button type="button" class="borrar-fila" aria-label="Quitar fila">×</button>
             <span class="oculto">{{ f.DELETE }}</span>
           </div>
           {% if f.errors %}
@@ -89,7 +81,7 @@
         {% endfor %}
       </div>
 
-      <p class="ayuda">Deja los cupones vacíos para calcularlos solos: unidades × cupones por unidad.</p>
+      <p class="ayuda">Cada fila es un cupón entregado (cantidad de productos dejados).</p>
     </section>
 
     <div class="fila-botones mt-20">
@@ -98,24 +90,14 @@
     </div>
   </form>
 
-  {{ productos_cupones|json_script:"datos-cupones" }}
-
   <div id="plantilla-fila" hidden>
     <div class="fila-formset">
       {{ formset.empty_form.id }}
       <div>
-        <span class="campo-mini-label">Producto</span>
-        {{ formset.empty_form.producto }}
-      </div>
-      <div>
-        <span class="campo-mini-label">Unid.</span>
-        {{ formset.empty_form.cantidad }}
-      </div>
-      <div>
         <span class="campo-mini-label">Cupones</span>
         {{ formset.empty_form.cupones }}
       </div>
-      <button type="button" class="borrar-fila" aria-label="Quitar producto">×</button>
+      <button type="button" class="borrar-fila" aria-label="Quitar fila">×</button>
       <span class="oculto">{{ formset.empty_form.DELETE }}</span>
     </div>
   </div>

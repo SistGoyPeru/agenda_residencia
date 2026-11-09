@@ -85,7 +85,7 @@
                 <td>{{ fila.visita.get_turno_display }}</td>
                 <td>
                   {% for linea in fila.visita.lineas.all %}
-                    {{ linea.cantidad }}× {{ linea.producto.nombre }}{% if not forloop.last %}, {% endif %}
+                    {{ linea.cupones }} cupón{{ linea.cupones|pluralize:"es" }}{% if not forloop.last %}, {% endif %}
                   {% empty %}—{% endfor %}
                 </td>
                 <td class="num">{{ fila.unidades }}</td>

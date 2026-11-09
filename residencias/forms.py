@@ -203,29 +203,20 @@ class VisitaForm(forms.ModelForm):
 class VisitaProductoForm(forms.ModelForm):
     class Meta:
         model = VisitaProducto
-        fields = ["producto", "cantidad", "cupones"]
+        fields = ["cupones"]
         widgets = {
-            "producto": forms.Select(attrs={"class": "campo campo-producto"}),
-            "cantidad": forms.NumberInput(
-                attrs={"class": "campo campo-cantidad", "min": 1}
-            ),
             "cupones": forms.NumberInput(
                 attrs={
                     "class": "campo campo-cupones",
                     "min": 0,
-                    "placeholder": "Auto",
+                    "placeholder": "Cupones",
                 }
             ),
         }
 
     def __init__(self, *args, user=None, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["producto"].queryset = Producto.objects.filter(
-            propietario=user, activo=True
-        )
-        self.fields["producto"].empty_label = "Producto..."
         self.fields["cupones"].required = False
-        self.fields["cupones"].help_text = "Vacío = unidades x cupones por unidad"
 
 
 VisitaProductoFormSet = inlineformset_factory(

@@ -360,7 +360,7 @@ class Visita(models.Model):
 
     @property
     def total_unidades(self):
-        return sum(linea.cantidad for linea in self.lineas.all())
+        return self.lineas.count()
 
     @property
     def total_cupones(self):
@@ -368,7 +368,7 @@ class Visita(models.Model):
 
 
 class VisitaProducto(models.Model):
-    """Producto entregado en una visita y cupones gastados."""
+    """Cupones gastados en una visita."""
 
     visita = models.ForeignKey(
         Visita,
@@ -376,27 +376,15 @@ class VisitaProducto(models.Model):
         related_name="lineas",
         verbose_name="Visita",
     )
-    producto = models.ForeignKey(
-        Producto,
-        on_delete=models.PROTECT,
-        related_name="lineas_visita",
-        verbose_name="Producto",
-    )
-    cantidad = models.PositiveIntegerField(default=1, verbose_name="Unidades")
     cupones = models.PositiveIntegerField(default=0, verbose_name="Cupones")
 
     class Meta:
         ordering = ["id"]
-        verbose_name = "Producto de la visita"
-        verbose_name_plural = "Productos de la visita"
+        verbose_name = "Cupón de la visita"
+        verbose_name_plural = "Cupones de la visita"
 
     def __str__(self):
-        return f"{self.cantidad} x {self.producto.nombre}"
-
-    def save(self, *args, **kwargs):
-        if not self.cupones:
-            self.cupones = self.cantidad * self.producto.cupones_por_unidad
-        super().save(*args, **kwargs)
+        return f"{self.cupones} cupón{'' if self.cupones == 1 else 'es'}"
 
 
 def rango_semana(referencia=None):

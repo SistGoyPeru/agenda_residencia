@@ -87,7 +87,7 @@ class ProductoAdmin(admin.ModelAdmin):
 class VisitaProductoInline(admin.TabularInline):
     model = VisitaProducto
     extra = 0
-    fields = ("producto", "cantidad", "cupones")
+    fields = ("cupones",)
 
 
 @admin.register(Visita)
