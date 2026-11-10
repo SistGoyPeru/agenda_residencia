@@ -1,15 +1,11 @@
 from django import forms
 from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import UserCreationForm
-from django.forms import inlineformset_factory
 
 from .models import (
-    MovimientoCupon,
     Perfil,
-    Producto,
     Residencia,
     Visita,
-    VisitaProducto,
     Zona,
 )
 
@@ -130,54 +126,6 @@ class ResidenciaForm(forms.ModelForm):
         self.fields["zona"].empty_label = "Sin zona"
 
 
-class ProductoForm(forms.ModelForm):
-    class Meta:
-        model = Producto
-        fields = [
-            "nombre",
-            "descripcion",
-            "cupones_por_unidad",
-            "stock_minimo",
-            "activo",
-        ]
-        widgets = {
-            "nombre": forms.TextInput(attrs={**TEXTO, "placeholder": "Pañal talla M"}),
-            "descripcion": forms.TextInput(attrs={**TEXTO, "placeholder": "Detalle opcional"}),
-            "cupones_por_unidad": forms.NumberInput(attrs={**TEXTO, "min": 1}),
-            "stock_minimo": forms.NumberInput(attrs={**TEXTO, "min": 0}),
-            "activo": forms.CheckboxInput(attrs={"class": "interruptor"}),
-        }
-
-    def __init__(self, *args, user=None, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.user = user
-
-
-class MovimientoCuponForm(forms.ModelForm):
-    class Meta:
-        model = MovimientoCupon
-        fields = ["producto", "fecha", "cantidad", "tipo", "notas"]
-        widgets = {
-            "producto": forms.Select(attrs=TEXTO),
-            "fecha": forms.DateInput(format="%Y-%m-%d", attrs={**TEXTO, "type": "date"}),
-            "cantidad": forms.NumberInput(attrs={**TEXTO, "placeholder": "Ej. 50"}),
-            "tipo": forms.Select(attrs=TEXTO),
-            "notas": forms.TextInput(attrs={**TEXTO, "placeholder": "Ej. compra semanal"}),
-        }
-
-    def __init__(self, *args, user=None, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields["producto"].queryset = Producto.objects.filter(
-            propietario=user
-        )
-
-    def clean_cantidad(self):
-        cantidad = self.cleaned_data.get("cantidad") or 0
-        if cantidad == 0:
-            raise forms.ValidationError("Indica una cantidad distinta de cero.")
-        return cantidad
-
-
 class VisitaForm(forms.ModelForm):
     class Meta:
         model = Visita
@@ -198,32 +146,3 @@ class VisitaForm(forms.ModelForm):
         if not self.instance.pk:
             self.fields["residencia"].empty_label = "Elige residencia..."
         self.fields["fecha"].input_formats = ["%Y-%m-%d"]
-
-
-class VisitaProductoForm(forms.ModelForm):
-    class Meta:
-        model = VisitaProducto
-        fields = ["cupones"]
-        widgets = {
-            "cupones": forms.NumberInput(
-                attrs={
-                    "class": "campo campo-cupones",
-                    "min": 0,
-                    "placeholder": "Cupones",
-                }
-            ),
-        }
-
-    def __init__(self, *args, user=None, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields["cupones"].required = False
-
-
-VisitaProductoFormSet = inlineformset_factory(
-    Visita,
-    VisitaProducto,
-    form=VisitaProductoForm,
-    extra=1,
-    can_delete=True,
-    validate_min=False,
-)

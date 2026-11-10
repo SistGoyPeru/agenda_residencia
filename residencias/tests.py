@@ -6,11 +6,8 @@ from django.urls import reverse
 from django.utils import timezone
 
 from .models import (
-    MovimientoCupon,
-    Producto,
     Residencia,
     Visita,
-    VisitaProducto,
     Zona,
     rango_semana,
     siguiente_residencia,
@@ -20,42 +17,6 @@ from .views import pendientes_de_la_semana, resumen_semana, estado_plan
 
 def crear_usuario(username="tester"):
     return get_user_model().objects.create_user(username=username, password="Clave1234!")
-
-
-class CuponesTests(TestCase):
-    def setUp(self):
-        self.usuario = crear_usuario("cupones_tester")
-        self.producto = Producto.objects.create(
-            nombre="Pañales talla M",
-            cupones_por_unidad=1,
-            stock_minimo=3,
-            propietario=self.usuario,
-        )
-        self.residencia = Residencia.objects.create(
-            nombre="Residencia Test", propietario=self.usuario
-        )
-
-    def test_cupones_automaticos_al_guardar_linea(self):
-        visita = Visita.objects.create(
-            residencia=self.residencia, fecha=timezone.localdate()
-        )
-        linea = VisitaProducto.objects.create(
-            visita=visita, cupones=3
-        )
-        self.assertEqual(linea.cupones, 3)
-
-    def test_borrar_visita_devuelve_cupones(self):
-        visita = Visita.objects.create(
-            residencia=self.residencia,
-            fecha=timezone.localdate(),
-            estado=Visita.Estado.ENTREGADA,
-        )
-        VisitaProducto.objects.create(
-            visita=visita, cupones=4
-        )
-        self.assertEqual(visita.total_cupones, 4)
-        visita.delete()
-        self.assertEqual(VisitaProducto.objects.count(), 0)
 
 
 class SiguienteResidenciaTests(TestCase):
@@ -138,8 +99,6 @@ class VistasTests(TestCase):
             frecuencia_semanal=1,
             propietario=self.usuario,
         )
-        self.producto = Producto.objects.create(nombre="Pañales", propietario=self.usuario)
-        MovimientoCupon.objects.create(producto=self.producto, cantidad=20)
         Visita.objects.create(
             residencia=self.residencia,
             fecha=timezone.localdate(),
@@ -151,8 +110,6 @@ class VistasTests(TestCase):
             "dashboard",
             "agenda",
             "residencia_list",
-            "cupones",
-            "producto_list",
             "zona_list",
         ]:
             respuesta = self.client.get(reverse(nombre))
@@ -168,17 +125,11 @@ class VistasTests(TestCase):
                 "turno": Visita.Turno.MANANA,
                 "estado": Visita.Estado.PENDIENTE,
                 "notas": "",
-                "lineas-TOTAL_FORMS": "1",
-                "lineas-INITIAL_FORMS": "0",
-                "lineas-MIN_NUM_FORMS": "0",
-                "lineas-MAX_NUM_FORMS": "1000",
-                "lineas-0-cupones": "3",
             },
         )
         self.assertEqual(respuesta.status_code, 302)
         visita = Visita.objects.get(residencia=otra)
-        self.assertEqual(visita.lineas.count(), 1)
-        self.assertEqual(visita.total_cupones, 3)
+        self.assertEqual(visita.estado, Visita.Estado.PENDIENTE)
 
         self.client.post(reverse("visita_estado", args=[visita.pk, "E"]))
         visita.refresh_from_db()
@@ -227,7 +178,7 @@ class ZonaCrudTests(TestCase):
 
 class AutenticacionTests(TestCase):
     def test_paginas_principales_redirigen_a_login(self):
-        for nombre in ["dashboard", "agenda", "residencia_list", "cupones", "zona_list"]:
+        for nombre in ["dashboard", "agenda", "residencia_list", "zona_list"]:
             respuesta = self.client.get(reverse(nombre))
             self.assertEqual(respuesta.status_code, 302, nombre)
             self.assertIn(reverse("login"), respuesta.url)

@@ -9,7 +9,7 @@
 
   <form method="post" class="tarjeta mt-14">
     {% csrf_token %}
-    <p class="ayuda">Esta acción elimina también las residencias, visitas y cupones de esta cuenta.</p>
+    <p class="ayuda">Esta acción elimina también las residencias y visitas de esta cuenta.</p>
     <div class="fila-botones mt-14">
       <a class="boton boton-fantasma" href="{% url 'usuarios' %}">Volver</a>
       <button class="boton boton-primario" type="submit">Eliminar</button>

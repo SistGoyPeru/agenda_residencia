@@ -72,7 +72,7 @@
             <div class="item-cuerpo">
               <p class="item-titulo">{{ v.fecha|date:"l d/m/Y" }}</p>
               <p class="item-sub">
-                {{ v.get_turno_display }} · {{ v.total_unidades }} unidad{{ v.total_unidades|pluralize:"es" }} · {{ v.total_cupones }} cupón{{ v.total_cupones|pluralize:"es" }}
+                {{ v.get_turno_display }}
               </p>
             </div>
             <span class="pill {% if v.estado == 'E' %}pill-e{% elif v.estado == 'I' %}pill-i{% else %}pill-p{% endif %}">{{ v.get_estado_display }}</span>

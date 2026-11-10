@@ -1,15 +1,12 @@
 """Modelos de la agenda de reparto en residencias de ancianos.
 
-La idea es sencilla: se visitan residencias, se entregan productos (pañales y
-otros) y por cada unidad entregada se gasta un cupón. El stock de cupones se
-controla con cargas manuales y se descuenta automáticamente con las visitas
-marcadas como entregadas.
+La idea es sencilla: se visitan residencias y se registra cada visita
+(pendiente, entregada o con incidencia) en la agenda semanal.
 """
 from datetime import timedelta
 
 from django.conf import settings
 from django.db import models
-from django.db.models import Sum
 from django.urls import reverse
 from django.utils import timezone
 
@@ -205,110 +202,6 @@ class Residencia(models.Model):
         return self.visitas_entregadas_semana(referencia) < self.frecuencia_semanal
 
 
-class Producto(models.Model):
-    """Producto repartido (pañales, empapadores, cremas...)."""
-
-    propietario = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        related_name="productos",
-        verbose_name="Propietario",
-    )
-    nombre = models.CharField(max_length=120, verbose_name="Nombre")
-    descripcion = models.CharField(
-        max_length=200, blank=True, verbose_name="Descripción"
-    )
-    cupones_por_unidad = models.PositiveSmallIntegerField(
-        default=1,
-        verbose_name="Cupones por unidad",
-        help_text="Cuántos cupones se gastan por cada unidad entregada.",
-    )
-    stock_minimo = models.PositiveIntegerField(
-        default=5,
-        verbose_name="Aviso de stock bajo",
-        help_text="Se avisa cuando quedan estos cupones o menos.",
-    )
-    activo = models.BooleanField(default=True, verbose_name="Activo")
-    creado_en = models.DateTimeField(auto_now_add=True)
-    actualizado_en = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        ordering = ["nombre"]
-        verbose_name = "Producto"
-        verbose_name_plural = "Productos"
-
-    def __str__(self):
-        return self.nombre
-
-    def get_absolute_url(self):
-        return reverse("producto_editar", args=[self.pk])
-
-    def cupones_cargados(self):
-        return self.movimientos.aggregate(total=Sum("cantidad"))["total"] or 0
-
-    def cupones_usados(self):
-        return (
-            self.lineas_visita.filter(visita__estado=Visita.Estado.ENTREGADA).aggregate(
-                total=Sum("cupones")
-            )["total"]
-            or 0
-        )
-
-    def stock_actual(self):
-        return self.cupones_cargados() - self.cupones_usados()
-
-    def stock_bajo(self):
-        return self.stock_actual() <= self.stock_minimo
-
-    def porcentaje_stock(self):
-        cargados = self.cupones_cargados()
-        if cargados <= 0:
-            return 0
-        return max(0, min(100, round(self.stock_actual() * 100 / cargados)))
-
-
-class MovimientoCupon(models.Model):
-    """Carga o ajuste manual de cupones de un producto.
-
-    Solo guarda entradas (positivas) y ajustes (pueden ser negativos). El uso
-    de cupones se calcula a partir de las visitas entregadas, así que borrar
-    una visita devuelve automáticamente los cupones al stock.
-    """
-
-    class Tipo(models.TextChoices):
-        CARGA = "C", "Carga de cupones"
-        AJUSTE = "A", "Ajuste"
-
-    producto = models.ForeignKey(
-        Producto,
-        on_delete=models.CASCADE,
-        related_name="movimientos",
-        verbose_name="Producto",
-    )
-    fecha = models.DateField(default=timezone.localdate, verbose_name="Fecha")
-    cantidad = models.IntegerField(
-        verbose_name="Cantidad",
-        help_text="Positivo para cargar cupones, negativo para descontarlos.",
-    )
-    tipo = models.CharField(
-        max_length=1,
-        choices=Tipo.choices,
-        default=Tipo.CARGA,
-        verbose_name="Tipo",
-    )
-    notas = models.CharField(max_length=200, blank=True, verbose_name="Notas")
-    creado_en = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        ordering = ["-fecha", "-id"]
-        verbose_name = "Movimiento de cupones"
-        verbose_name_plural = "Movimientos de cupones"
-
-    def __str__(self):
-        signo = "+" if self.cantidad >= 0 else ""
-        return f"{signo}{self.cantidad} {self.producto.nombre}"
-
-
 class Visita(models.Model):
     """Una visita a una residencia (hoja de reparto de ese día)."""
 
@@ -357,34 +250,6 @@ class Visita(models.Model):
 
     def get_absolute_url(self):
         return reverse("visita_detalle", args=[self.pk])
-
-    @property
-    def total_unidades(self):
-        return self.lineas.count()
-
-    @property
-    def total_cupones(self):
-        return sum(linea.cupones for linea in self.lineas.all())
-
-
-class VisitaProducto(models.Model):
-    """Cupones gastados en una visita."""
-
-    visita = models.ForeignKey(
-        Visita,
-        on_delete=models.CASCADE,
-        related_name="lineas",
-        verbose_name="Visita",
-    )
-    cupones = models.PositiveIntegerField(default=0, verbose_name="Cupones")
-
-    class Meta:
-        ordering = ["id"]
-        verbose_name = "Cupón de la visita"
-        verbose_name_plural = "Cupones de la visita"
-
-    def __str__(self):
-        return f"{self.cupones} cupón{'' if self.cupones == 1 else 'es'}"
 
 
 def rango_semana(referencia=None):

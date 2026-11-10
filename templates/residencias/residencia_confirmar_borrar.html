@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Borrar {{ residencia.nombre }}{% endblock %}
+{% block content %}
+<h2 class="seccion-titulo">Borrar residencia</h2>
+<div class="tarjeta">
+  <p>¿Estás seguro de que quieres borrar la residencia <strong>{{ residencia.nombre }}</strong>? Esta acción no se puede deshacer.</p>
+  <form method="post" style="margin-top:1rem;">
+    {% csrf_token %}
+    <button class="boton peligro" type="submit">Sí, borrar</button>
+    <a href="{% url 'residencia_detalle' residencia.pk %}" class="boton fantasma">Cancelar</a>
+  </form>
+</div>
+{% endblock %}

@@ -21,50 +21,6 @@
     </div>
   </div>
 
-  <div class="stats">
-    <div class="stat verde">
-      <span class="num">{{ visita.total_unidades }}</span>
-      <span class="eti">Unidades</span>
-    </div>
-    <div class="stat ambar">
-      <span class="num">{{ visita.total_cupones }}</span>
-      <span class="eti">Cupones</span>
-    </div>
-    <div class="stat">
-      <span class="num">{{ visita.lineas.count }}</span>
-      <span class="eti">Productos</span>
-    </div>
-  </div>
-
-  <section class="seccion">
-    <div class="seccion-cabecera">
-      <h2 class="seccion-titulo">Productos entregados</h2>
-      <a class="seccion-enlace" href="{% url 'visita_editar' visita.pk %}">Editar</a>
-    </div>
-    {% if visita.lineas.all %}
-      <div class="lista">
-        {% for linea in visita.lineas.all %}
-          <div class="item">
-            <span class="avatar">C</span>
-            <div class="item-cuerpo">
-              <p class="item-titulo">Cupón</p>
-              <p class="item-sub">{{ linea.cupones }} cupón{{ linea.cupones|pluralize:"es" }}</p>
-            </div>
-            <span class="destacado">{{ linea.cupones }}</span>
-          </div>
-        {% endfor %}
-      </div>
-    {% else %}
-      <div class="vacio">
-        <strong>Sin productos</strong>
-        Esta visita todavía no tiene productos cargados.
-      </div>
-      <div class="mt-14">
-        <a class="boton boton-primario boton-bloque" href="{% url 'visita_editar' visita.pk %}">Añadir productos</a>
-      </div>
-    {% endif %}
-  </section>
-
   {% if visita.notas %}
     <div class="tarjeta">
       <span class="etiqueta-mini">Notas</span>

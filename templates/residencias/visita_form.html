@@ -10,7 +10,7 @@
 
   <div class="detalle-cabecera">
     <h1>{% if visita %}Editar visita{% else %}Nueva visita{% endif %}</h1>
-    <p class="detalle-sub">Apunta los productos entregados y los cupones gastados.</p>
+    <p class="detalle-sub">Registra la visita: fecha, turno, estado y notas.</p>
   </div>
 
   <form method="post" class="mt-20" id="form-visita">
@@ -53,52 +53,10 @@
       </div>
     </div>
 
-    <section class="seccion">
-      <div class="seccion-cabecera">
-        <h2 class="seccion-titulo">Productos entregados</h2>
-        <button type="button" class="boton boton-mini boton-fantasma" id="anadir-fila">+ Añadir</button>
-      </div>
-
-      {{ formset.management_form }}
-      {% if formset.non_form_errors %}
-        <div class="aviso-flash error">{{ formset.non_form_errors|join:", " }}</div>
-      {% endif %}
-
-      <div id="filas-formset">
-        {% for f in formset %}
-          <div class="fila-formset">
-            {{ f.id }}
-            <div>
-              <span class="campo-mini-label">Cupones</span>
-              {{ f.cupones }}
-            </div>
-            <button type="button" class="borrar-fila" aria-label="Quitar fila">×</button>
-            <span class="oculto">{{ f.DELETE }}</span>
-          </div>
-          {% if f.errors %}
-            <div class="aviso-flash error" style="margin-top:-4px">{{ f.errors }}</div>
-          {% endif %}
-        {% endfor %}
-      </div>
-
-      <p class="ayuda">Cada fila es un cupón entregado (cantidad de productos dejados).</p>
-    </section>
-
     <div class="fila-botones mt-20">
       <a class="boton boton-fantasma" href="{% if visita %}{% url 'visita_detalle' visita.pk %}{% else %}{% url 'agenda' %}{% endif %}">Cancelar</a>
       <button class="boton boton-primario" type="submit">Guardar visita</button>
     </div>
   </form>
 
-  <div id="plantilla-fila" hidden>
-    <div class="fila-formset">
-      {{ formset.empty_form.id }}
-      <div>
-        <span class="campo-mini-label">Cupones</span>
-        {{ formset.empty_form.cupones }}
-      </div>
-      <button type="button" class="borrar-fila" aria-label="Quitar fila">×</button>
-      <span class="oculto">{{ formset.empty_form.DELETE }}</span>
-    </div>
-  </div>
 {% endblock %}

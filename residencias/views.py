@@ -26,22 +26,16 @@ def requiere_pro(view_func):
     return _wrapped
 
 from .forms import (
-    MovimientoCuponForm,
     PerfilForm,
-    ProductoForm,
     RegistroForm,
     ResidenciaForm,
     VisitaForm,
-    VisitaProductoFormSet,
     ZonaForm,
 )
 from .models import (
-    MovimientoCupon,
     Perfil,
-    Producto,
     Residencia,
     Visita,
-    VisitaProducto,
     Zona,
     perfil_de,
     rango_semana,
@@ -71,46 +65,6 @@ def estado_plan(usuario):
         "limite_residencias": limite,
         "puede_agregar": limite is None or usadas < limite,
     }
-
-
-def productos_con_stock(usuario, solo_activos=True):
-    """Lista de productos del usuario con las cifras de cupones calculadas."""
-    queryset = Producto.objects.filter(propietario=usuario)
-    if solo_activos:
-        queryset = queryset.filter(activo=True)
-    productos = list(queryset)
-
-    cargados = {
-        fila["producto_id"]: fila["total"]
-        for fila in MovimientoCupon.objects.filter(producto__propietario=usuario)
-        .values("producto_id")
-        .annotate(total=Sum("cantidad"))
-    }
-    usados = {}
-
-    for producto in productos:
-        producto.cargados = cargados.get(producto.pk, 0)
-        producto.usados = 0
-        producto.stock = producto.cargados - producto.usados
-        producto.bajo = producto.stock <= producto.stock_minimo
-        if producto.cargados > 0:
-            producto.porcentaje = max(
-                0, min(100, round(producto.stock * 100 / producto.cargados))
-            )
-        else:
-            producto.porcentaje = 0
-    return productos
-
-
-def cupones_usados_en(usuario, inicio, fin):
-    return (
-        VisitaProducto.objects.filter(
-            visita__residencia__propietario=usuario,
-            visita__estado=Visita.Estado.ENTREGADA,
-            visita__fecha__range=(inicio, fin),
-        ).aggregate(total=Sum("cupones"))["total"]
-        or 0
-    )
 
 
 def pendientes_de_la_semana(usuario, referencia):
@@ -371,6 +325,7 @@ def landing(request):
     return render(request, "residencias/landing.html")
 
 
+@login_required
 def dashboard(request):
     hoy = timezone.localdate()
     inicio, fin = rango_semana(hoy)
@@ -385,7 +340,6 @@ def dashboard(request):
         "pendientes": sum(v.estado == Visita.Estado.PENDIENTE for v in visitas_hoy),
         "incidencias": sum(v.estado == Visita.Estado.INCIDENCIA for v in visitas_hoy),
     }
-    productos = productos_con_stock(request.user)
     usuarios_stats = []
     if request.user.is_staff:
         from django.contrib.auth import get_user_model
@@ -406,10 +360,6 @@ def dashboard(request):
                         estado=Visita.Estado.PENDIENTE,
                         fecha__range=(inicio, fin),
                     ).count(),
-                    "cupones": cupones_usados_en(u, inicio, fin),
-                    "productos": Producto.objects.filter(
-                        propietario=u, activo=True
-                    ).count(),
                 }
             )
     contexto = {
@@ -419,10 +369,6 @@ def dashboard(request):
         "siguiente": siguiente_residencia(request.user, hoy),
         "pendientes": pendientes_de_la_semana(request.user, hoy),
         "semana": resumen_semana(request.user, hoy),
-        "productos_bajos": [p for p in productos if p.bajo],
-        "productos": productos,
-        "cupones_semana": cupones_usados_en(request.user, inicio, fin),
-        "total_cupones": sum(p.stock for p in productos),
         "estado": estado_plan(request.user),
         "usuarios_stats": usuarios_stats,
     }
@@ -538,11 +484,7 @@ def residencia_detalle(request, pk):
         propietario=request.user,
     )
     inicio, fin = rango_semana()
-    visitas = list(
-        residencia.visitas.select_related("residencia").prefetch_related(
-            "lineas"
-        )[:40]
-    )
+    visitas = list(residencia.visitas.select_related("residencia")[:40])
     contexto = {
         "residencia": residencia,
         "visitas": visitas,
@@ -628,92 +570,6 @@ def zona_borrar(request, pk):
 
 
 @requiere_pro
-def producto_list(request):
-    productos = productos_con_stock(request.user, solo_activos=False)
-    return render(
-        request, "residencias/producto_list.html", {"productos": productos}
-    )
-
-
-@requiere_pro
-def producto_form(request, pk=None):
-    producto = (
-        get_object_or_404(Producto, pk=pk, propietario=request.user)
-        if pk
-        else None
-    )
-    if request.method == "POST":
-        form = ProductoForm(request.POST, instance=producto, user=request.user)
-        if form.is_valid():
-            guardado = form.save(commit=False)
-            guardado.propietario = request.user
-            guardado.save()
-            messages.success(request, f"Producto Â«{guardado.nombre}Â» guardado.")
-            return redirect("producto_list")
-    else:
-        form = ProductoForm(instance=producto, user=request.user)
-    return render(
-        request,
-        "residencias/producto_form.html",
-        {"form": form, "producto": producto},
-    )
-
-
-@requiere_pro
-def producto_borrar(request, pk):
-    producto = get_object_or_404(Producto, pk=pk, propietario=request.user)
-    if request.method == "POST":
-        try:
-            producto.delete()
-            messages.success(request, f"Producto «{producto.nombre}» eliminado.")
-            return redirect("producto_list")
-        except ProtectedError:
-            messages.error(
-                request,
-                "No se puede borrar el producto: se ha usado en visitas registradas.",
-            )
-            return redirect("producto_list")
-    return render(
-        request, "residencias/producto_confirmar_borrado.html", {"objeto": producto}
-    )
-
-
-@requiere_pro
-def cupones(request):
-    productos = productos_con_stock(request.user)
-    inicio, fin = rango_semana()
-    contexto = {
-        "productos": productos,
-        "total_cupones": sum(p.stock for p in productos),
-        "bajos": [p for p in productos if p.bajo],
-        "usados_semana": cupones_usados_en(request.user, inicio, fin),
-        "movimientos": MovimientoCupon.objects.filter(
-            producto__propietario=request.user
-        ).select_related("producto")[:20],
-        "form": MovimientoCuponForm(
-            initial={"fecha": timezone.localdate()}, user=request.user
-        ),
-    }
-    return render(request, "residencias/cupones.html", contexto)
-
-
-@requiere_pro
-def cupon_cargar(request):
-    if request.method == "POST":
-        form = MovimientoCuponForm(request.POST, user=request.user)
-        if form.is_valid():
-            movimiento = form.save()
-            messages.success(
-                request,
-                f"{movimiento.cantidad:+d} cupones de Â«{movimiento.producto.nombre}Â».",
-            )
-        else:
-            for errores in form.errors.values():
-                messages.error(request, errores[0])
-    return redirect("cupones")
-
-
-@requiere_pro
 def visita_form(request, pk=None):
     visita = (
         get_object_or_404(Visita, pk=pk, residencia__propietario=request.user)
@@ -722,13 +578,8 @@ def visita_form(request, pk=None):
     )
     if request.method == "POST":
         form = VisitaForm(request.POST, instance=visita, user=request.user)
-        formset = VisitaProductoFormSet(
-            request.POST, instance=visita, form_kwargs={"user": request.user}
-        )
-        if form.is_valid() and formset.is_valid():
+        if form.is_valid():
             guardada = form.save()
-            formset.instance = guardada
-            formset.save()
             messages.success(request, "Visita guardada.")
             return redirect("visita_detalle", pk=guardada.pk)
         messages.error(request, "Revisa los datos de la visita.")
@@ -738,17 +589,10 @@ def visita_form(request, pk=None):
         if residencia_id and not visita:
             initial["residencia"] = residencia_id
         form = VisitaForm(instance=visita, initial=initial, user=request.user)
-        formset = VisitaProductoFormSet(
-            instance=visita, form_kwargs={"user": request.user}
-        )
     return render(
         request,
         "residencias/visita_form.html",
-        {
-            "form": form,
-            "formset": formset,
-            "visita": visita,
-        },
+        {"form": form, "visita": visita},
     )
 
 
@@ -757,7 +601,7 @@ def visita_detalle(request, pk):
     visita = get_object_or_404(
         Visita.objects.select_related(
             "residencia", "residencia__zona"
-        ).prefetch_related("lineas"),
+        ),
         pk=pk,
         residencia__propietario=request.user,
     )
@@ -828,7 +672,6 @@ def datos_reporte_mensual(request):
             fecha__range=(inicio, fin),
         )
         .select_related("residencia", "residencia__zona")
-        .prefetch_related("lineas__producto")
         .order_by("fecha", "turno", "residencia__nombre")
     )
     if residencia_id:
@@ -837,28 +680,16 @@ def datos_reporte_mensual(request):
     filas = []
     por_residencia = {}
     por_fecha = {}
-    total_unidades = 0
-    total_cupones = 0
     for visita in visitas:
-        unidades = visita.total_unidades
-        cupones = visita.total_cupones
-        total_unidades += unidades
-        total_cupones += cupones
-        filas.append(
-            {"visita": visita, "unidades": unidades, "cupones": cupones}
-        )
+        filas.append(visita)
         resumen = por_residencia.setdefault(
             visita.residencia_id,
             {
                 "residencia": visita.residencia,
                 "visitas": 0,
-                "unidades": 0,
-                "cupones": 0,
             },
         )
         resumen["visitas"] += 1
-        resumen["unidades"] += unidades
-        resumen["cupones"] += cupones
         fecha_str = visita.fecha.strftime("%d/%m/%Y")
         resumen_fecha = por_fecha.setdefault(
             fecha_str,
@@ -866,26 +697,18 @@ def datos_reporte_mensual(request):
                 "fecha": visita.fecha,
                 "fecha_str": fecha_str,
                 "visitas": 0,
-                "unidades": 0,
-                "cupones": 0,
                 "residencias": {},
             },
         )
         resumen_fecha["visitas"] += 1
-        resumen_fecha["unidades"] += unidades
-        resumen_fecha["cupones"] += cupones
         res_fecha = resumen_fecha["residencias"].setdefault(
             visita.residencia_id,
             {
                 "residencia": visita.residencia,
                 "visitas": 0,
-                "unidades": 0,
-                "cupones": 0,
             },
         )
         res_fecha["visitas"] += 1
-        res_fecha["unidades"] += unidades
-        res_fecha["cupones"] += cupones
 
     contexto = {
         "mes": inicio.strftime("%Y-%m"),
@@ -903,8 +726,6 @@ def datos_reporte_mensual(request):
             por_fecha.values(), key=lambda f: f["fecha"]
         ),
         "total_visitas": len(filas),
-        "total_unidades": total_unidades,
-        "total_cupones": total_cupones,
         "perfil": perfil_de(request.user),
         "es_mes_actual": inicio.strftime("%Y-%m") == hoy.strftime("%Y-%m"),
     }
@@ -1010,15 +831,13 @@ def reporte_mensual_pdf(request):
     elementos.append(Spacer(1, 12))
 
     resumen = [
-        ["Residencias", "Visitas", "Unidades", "Cupones"],
+        ["Residencias", "Visitas"],
         [
             str(len(datos["por_residencia"])),
             str(datos["total_visitas"]),
-            str(datos["total_unidades"]),
-            str(datos["total_cupones"]),
         ],
     ]
-    tabla_resumen = Table(resumen, colWidths=[4.4 * cm] * 4)
+    tabla_resumen = Table(resumen, colWidths=[4.4 * cm] * 2)
     tabla_resumen.setStyle(
         TableStyle(
             [
@@ -1036,16 +855,12 @@ def reporte_mensual_pdf(request):
     )
     elementos.append(tabla_resumen)
 
-    
-
     if datos["por_residencia"]:
         elementos.append(Paragraph("Resumen por residencia", seccion))
         filas = [
             [
                 Paragraph("Residencia", cabecera_celda),
                 Paragraph("Visitas", cabecera_celda),
-                Paragraph("Unidades", cabecera_celda),
-                Paragraph("Cupones", cabecera_celda),
             ]
         ]
         for resumen_residencia in datos["por_residencia"]:
@@ -1053,19 +868,15 @@ def reporte_mensual_pdf(request):
                 [
                     Paragraph(resumen_residencia["residencia"].nombre, celda),
                     Paragraph(str(resumen_residencia["visitas"]), celda),
-                    Paragraph(str(resumen_residencia["unidades"]), celda),
-                    Paragraph(str(resumen_residencia["cupones"]), celda),
                 ]
             )
         filas.append(
             [
                 Paragraph("Totales", celda),
                 Paragraph(str(sum(r["visitas"] for r in datos["por_residencia"])), celda),
-                Paragraph(str(sum(r["unidades"] for r in datos["por_residencia"])), celda),
-                Paragraph(str(sum(r["cupones"] for r in datos["por_residencia"])), celda),
             ]
         )
-        tabla = Table(filas, colWidths=[9.4 * cm, 2.2 * cm, 2.2 * cm, 2.2 * cm], repeatRows=1)
+        tabla = Table(filas, colWidths=[9.4 * cm, 2.2 * cm], repeatRows=1)
         tabla.setStyle(
             TableStyle(
                 [
@@ -1087,8 +898,6 @@ def reporte_mensual_pdf(request):
                     Paragraph("Fecha", cabecera_celda),
                     Paragraph("Residencia", cabecera_celda),
                     Paragraph("Visitas", cabecera_celda),
-                    Paragraph("Unidades", cabecera_celda),
-                    Paragraph("Cupones", cabecera_celda),
                 ]
             ]
             residencias_fecha = list(resumen_fecha["residencias"].values())
@@ -1099,8 +908,6 @@ def reporte_mensual_pdf(request):
                             Paragraph(resumen_fecha["fecha_str"], celda),
                             Paragraph(rf["residencia"].nombre, celda),
                             Paragraph(str(rf["visitas"]), celda),
-                            Paragraph(str(rf["unidades"]), celda),
-                            Paragraph(str(rf["cupones"]), celda),
                         ]
                     )
                 else:
@@ -1109,8 +916,6 @@ def reporte_mensual_pdf(request):
                             Paragraph("", celda),
                             Paragraph(rf["residencia"].nombre, celda),
                             Paragraph(str(rf["visitas"]), celda),
-                            Paragraph(str(rf["unidades"]), celda),
-                            Paragraph(str(rf["cupones"]), celda),
                         ]
                     )
             filas_fecha.append(
@@ -1118,13 +923,11 @@ def reporte_mensual_pdf(request):
                     Paragraph("Subtotal", celda),
                     Paragraph(resumen_fecha["fecha_str"], celda),
                     Paragraph(str(resumen_fecha["visitas"]), celda),
-                    Paragraph(str(resumen_fecha["unidades"]), celda),
-                    Paragraph(str(resumen_fecha["cupones"]), celda),
                 ]
             )
             tabla_fecha = Table(
                 filas_fecha,
-                colWidths=[2.6 * cm, 4.4 * cm, 1.8 * cm, 1.8 * cm, 1.8 * cm],
+                colWidths=[2.6 * cm, 4.4 * cm, 1.8 * cm],
                 repeatRows=1,
             )
             tabla_fecha.setStyle(

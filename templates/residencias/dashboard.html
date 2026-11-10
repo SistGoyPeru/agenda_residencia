@@ -170,35 +170,6 @@
     {% endif %}
   </section>
 
-  <section class="seccion">
-    <div class="seccion-cabecera">
-      <h2 class="seccion-titulo">Cupones</h2>
-      <a class="seccion-enlace" href="{% url 'cupones' %}">Gestionar ›</a>
-    </div>
-    <div class="tarjeta">
-      <div class="fila-botones" style="align-items:center;justify-content:space-between">
-        <div>
-          <span class="etiqueta-mini">En stock</span>
-          <p class="destacado" style="font-size:1.6rem;margin:2px 0 0">{{ total_cupones }}</p>
-        </div>
-        <div>
-          <span class="etiqueta-mini">Usados esta semana</span>
-          <p class="destacado" style="font-size:1.6rem;margin:2px 0 0">{{ cupones_semana }}</p>
-        </div>
-      </div>
-      {% if productos_bajos %}
-        <p class="etiqueta-mini mt-14">Aviso de stock bajo</p>
-        <div class="item-meta">
-          {% for p in productos_bajos %}
-            <span class="chip chip-alerta">{{ p.nombre }}: {{ p.stock }}</span>
-          {% endfor %}
-        </div>
-      {% else %}
-        <p class="ayuda mt-14">Todos los productos tienen cupones suficientes.</p>
-      {% endif %}
-    </div>
-  </section>
-
   {% if request.user.is_staff and usuarios_stats %}
     <section class="seccion">
       <div class="seccion-cabecera">
@@ -212,8 +183,6 @@
               <th class="num">Residencias</th>
               <th class="num">Entregadas</th>
               <th class="num">Pendientes</th>
-              <th class="num">Cupones</th>
-              <th class="num">Productos</th>
             </tr>
           </thead>
           <tbody>
@@ -223,8 +192,6 @@
                 <td class="num">{{ fila.residencias }}</td>
                 <td class="num">{{ fila.entregadas }}</td>
                 <td class="num">{{ fila.pendientes }}</td>
-                <td class="num">{{ fila.cupones }}</td>
-                <td class="num">{{ fila.productos }}</td>
               </tr>
             {% endfor %}
           </tbody>
