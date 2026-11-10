@@ -251,6 +251,34 @@ class Visita(models.Model):
     def get_absolute_url(self):
         return reverse("visita_detalle", args=[self.pk])
 
+    @property
+    def total_unidades(self):
+        return self.lineas.count()
+
+    @property
+    def total_cupones(self):
+        return sum(linea.cupones for linea in self.lineas.all())
+
+
+class VisitaProducto(models.Model):
+    """Cupones gastados en una visita."""
+
+    visita = models.ForeignKey(
+        Visita,
+        on_delete=models.CASCADE,
+        related_name="lineas",
+        verbose_name="Visita",
+    )
+    cupones = models.PositiveIntegerField(default=0, verbose_name="Cupones")
+
+    class Meta:
+        ordering = ["id"]
+        verbose_name = "Cupón de la visita"
+        verbose_name_plural = "Cupones de la visita"
+
+    def __str__(self):
+        return f"{self.cupones} cupón{'' if self.cupones == 1 else 'es'}"
+
 
 def rango_semana(referencia=None):
     """Lunes y domingo de la semana de la fecha dada (por defecto hoy)."""

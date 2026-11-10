@@ -30,12 +30,14 @@ from .forms import (
     RegistroForm,
     ResidenciaForm,
     VisitaForm,
+    VisitaProductoFormSet,
     ZonaForm,
 )
 from .models import (
     Perfil,
     Residencia,
     Visita,
+    VisitaProducto,
     Zona,
     perfil_de,
     rango_semana,
@@ -484,7 +486,11 @@ def residencia_detalle(request, pk):
         propietario=request.user,
     )
     inicio, fin = rango_semana()
-    visitas = list(residencia.visitas.select_related("residencia")[:40])
+    visitas = list(
+        residencia.visitas.select_related("residencia").prefetch_related(
+            "lineas"
+        )[:40]
+    )
     contexto = {
         "residencia": residencia,
         "visitas": visitas,
@@ -578,8 +584,13 @@ def visita_form(request, pk=None):
     )
     if request.method == "POST":
         form = VisitaForm(request.POST, instance=visita, user=request.user)
-        if form.is_valid():
+        formset = VisitaProductoFormSet(
+            request.POST, instance=visita, form_kwargs={"user": request.user}
+        )
+        if form.is_valid() and formset.is_valid():
             guardada = form.save()
+            formset.instance = guardada
+            formset.save()
             messages.success(request, "Visita guardada.")
             return redirect("visita_detalle", pk=guardada.pk)
         messages.error(request, "Revisa los datos de la visita.")
@@ -589,10 +600,17 @@ def visita_form(request, pk=None):
         if residencia_id and not visita:
             initial["residencia"] = residencia_id
         form = VisitaForm(instance=visita, initial=initial, user=request.user)
+        formset = VisitaProductoFormSet(
+            instance=visita, form_kwargs={"user": request.user}
+        )
     return render(
         request,
         "residencias/visita_form.html",
-        {"form": form, "visita": visita},
+        {
+            "form": form,
+            "formset": formset,
+            "visita": visita,
+        },
     )
 
 
@@ -601,7 +619,7 @@ def visita_detalle(request, pk):
     visita = get_object_or_404(
         Visita.objects.select_related(
             "residencia", "residencia__zona"
-        ),
+        ).prefetch_related("lineas"),
         pk=pk,
         residencia__propietario=request.user,
     )

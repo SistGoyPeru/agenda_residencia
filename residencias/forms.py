@@ -1,11 +1,13 @@
 from django import forms
 from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import UserCreationForm
+from django.forms import inlineformset_factory
 
 from .models import (
     Perfil,
     Residencia,
     Visita,
+    VisitaProducto,
     Zona,
 )
 
@@ -124,6 +126,35 @@ class ResidenciaForm(forms.ModelForm):
         self.user = user
         self.fields["zona"].queryset = Zona.objects.filter(propietario=user)
         self.fields["zona"].empty_label = "Sin zona"
+
+
+class VisitaProductoForm(forms.ModelForm):
+    class Meta:
+        model = VisitaProducto
+        fields = ["cupones"]
+        widgets = {
+            "cupones": forms.NumberInput(
+                attrs={
+                    "class": "campo campo-cupones",
+                    "min": 0,
+                    "placeholder": "Cupones",
+                }
+            ),
+        }
+
+    def __init__(self, *args, user=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["cupones"].required = False
+
+
+VisitaProductoFormSet = inlineformset_factory(
+    Visita,
+    VisitaProducto,
+    form=VisitaProductoForm,
+    extra=1,
+    can_delete=True,
+    validate_min=False,
+)
 
 
 class VisitaForm(forms.ModelForm):
